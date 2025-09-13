@@ -25,11 +25,16 @@
             --text-muted-color: #4b5563;
         }
 
+        /* PERBAIKAN BUG: Mencegah halaman bergeser secara horizontal */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden; /* Mencegah scrollbar */
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         #info-panel, #controls-panel, #title-panel {
@@ -242,19 +247,22 @@
     </div>
     
     <!-- Modal Tabel Periodik -->
-    <div id="periodic-table-modal" class="modal hidden fixed inset-0 z-20 flex justify-center items-center transition-opacity duration-300">
+    <div id="periodic-table-modal" class="modal hidden fixed inset-0 z-20 flex justify-center items-center transition-opacity duration-300 p-4">
         <div id="periodic-table-backdrop" class="absolute inset-0"></div>
-        <div id="periodic-table-container" class="modal-container p-4 rounded-lg shadow-lg relative max-w-7xl">
+        <div id="periodic-table-container" class="modal-container p-4 rounded-lg shadow-lg relative w-full max-w-7xl">
              <h3 class="text-lg font-bold text-center mb-4">Pilih Unsur</h3>
-             <div id="periodic-table-grid" class="grid gap-1 text-center text-xs" style="grid-template-columns: repeat(18, minmax(0, 1fr));">
-                <!-- Grid akan diisi oleh JavaScript -->
+             <!-- PERBAIKAN BUG: Wrapper untuk scroll horizontal di HP -->
+             <div class="overflow-x-auto">
+                <div id="periodic-table-grid" class="grid gap-1 text-center text-xs min-w-[700px]" style="grid-template-columns: repeat(18, minmax(0, 1fr));">
+                    <!-- Grid akan diisi oleh JavaScript -->
+                </div>
              </div>
         </div>
     </div>
     
     <!-- Modal Peringatan Kinerja -->
-    <div id="performance-warning-modal" class="modal hidden fixed inset-0 z-30 flex justify-center items-center">
-        <div class="modal-container p-6 rounded-lg shadow-lg text-center max-w-sm">
+    <div id="performance-warning-modal" class="modal hidden fixed inset-0 z-30 flex justify-center items-center p-4">
+        <div class="modal-container p-6 rounded-lg shadow-lg text-center w-full max-w-sm">
             <h3 class="text-xl font-bold mb-2">Peringatan Kinerja</h3>
             <p class="text-sm mb-4">Unsur yang Anda pilih sangat besar. Ini mungkin akan memperlambat kinerja perangkat Anda karena perlu merender banyak partikel 3D.</p>
             <div class="flex gap-4 mt-6">
