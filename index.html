@@ -92,7 +92,7 @@
         body.light-mode .stability-tidak-stabil { color: #ea580c; }
 
         /* Gaya baru untuk panel yang bisa disembunyikan ke samping */
-        #info-panel {
+        #info-panel, #lattice-info-panel {
             transition: transform 0.5s ease-in-out;
         }
 
@@ -162,8 +162,8 @@
             transition: color 0.3s ease;
         }
 
-        /* Gaya untuk slider ekspansi */
-        #expansion-slider-container {
+        /* Gaya untuk slider */
+        .slider-container {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
         input[type="range"] {
@@ -190,12 +190,66 @@
         body.light-mode input[type="range"]::-webkit-slider-thumb {
             background: #374151;
         }
+        
+        /* Gaya untuk kontrol kisi */
+        #lattice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        #lattice-controls label, #lattice-display-controls label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #lattice-controls select {
+            background-color: rgba(75, 85, 99, 0.3);
+            border: 1px solid var(--panel-border-color);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            color: var(--text-color);
+        }
+
+        body.light-mode #lattice-controls select {
+            background-color: rgba(229, 231, 235, 0.4);
+        }
+        
+        input[type="radio"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: transparent;
+            margin: 0;
+            font: inherit;
+            color: var(--text-muted-color);
+            width: 1.15em;
+            height: 1.15em;
+            border: 0.15em solid currentColor;
+            border-radius: 50%;
+            transform: translateY(-0.075em);
+            display: grid;
+            place-content: center;
+        }
+        input[type="radio"]::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em #3b82f6;
+        }
+        input[type="radio"]:checked::before {
+            transform: scale(1);
+        }
+
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="w-screen h-screen m-0 p-0 light-mode">
+<body class="w-screen h-screen m-0 p-0"> <!-- Dihapus: light-mode default -->
 
     <!-- Canvas untuk render 3D -->
     <canvas id="bg"></canvas>
@@ -302,20 +356,75 @@
             </div>
         </div>
 
-         <!-- Kontrol Slider Ekspansi -->
-        <div id="expansion-slider-container" class="panel absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 w-4/5 max-w-xs p-2 rounded-lg shadow-lg z-10 hidden opacity-0">
-            <label for="expansion-slider" class="text-xs text-center block mb-1">Jarak Inti</label>
-            <input type="range" id="expansion-slider" min="1" max="4" step="0.1" value="1">
+         <!-- Kontrol Slider Ekspansi Atom -->
+        <div id="atom-expansion-slider-container" class="panel absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 w-4/5 max-w-xs p-2 rounded-lg shadow-lg z-10 hidden opacity-0 slider-container">
+            <label for="atom-expansion-slider" class="text-xs text-center block mb-1">Jarak Inti</label>
+            <input type="range" id="atom-expansion-slider" min="1" max="4" step="0.1" value="1">
         </div>
     </div>
     
-    <!-- === UI UNTUK MODE STRUKTUR KISI (PLACEHOLDER) === -->
+    <!-- === UI UNTUK MODE STRUKTUR KISI === -->
     <div id="lattice-sim-ui" class="hidden">
-        <div class="panel absolute bottom-8 left-1/2 -translate-x-1/2 p-4 rounded-lg">
-            <p>Kontrol untuk Simulasi Struktur Kisi akan muncul di sini.</p>
+        <!-- Panel Kontrol Kiri -->
+        <div id="lattice-controls-panel" class="panel absolute top-44 sm:top-40 md:top-28 left-2 md:left-4 p-4 rounded-lg shadow-lg w-auto z-10">
+             <div id="lattice-controls" class="space-y-4">
+                <div>
+                    <label for="lattice-type-select" class="block text-sm font-medium mb-2">Struktur Kisi</label>
+                    <select id="lattice-type-select">
+                        <option value="sc">Simple Cubic</option>
+                        <option value="bcc">Body-Centered Cubic</option>
+                        <option value="fcc">Face-Centered Cubic</option>
+                        <option value="hcp">Hexagonal Close-Packed</option>
+                    </select>
+                </div>
+                <div id="lattice-display-controls" class="space-y-2">
+                    <label>
+                        <input type="radio" name="lattice-display" value="unit-cell" checked>
+                        <span class="ml-2 text-sm">Unit Cell</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="lattice-display" value="layer">
+                        <span class="ml-2 text-sm">Layer</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="lattice-display" value="coordination">
+                        <span class="ml-2 text-sm">Coordination</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="lattice-display" value="single">
+                        <span class="ml-2 text-sm">Single</span>
+                    </label>
+                </div>
+                <button id="toggle-outline-btn" class="btn btn-secondary w-full text-xs sm:text-sm !py-1">Sembunyikan Sel</button>
+            </div>
+        </div>
+        
+        <!-- Panel Informasi Kisi -->
+        <div id="lattice-info-panel" class="panel absolute top-44 sm:top-40 md:top-4 right-2 md:right-4 p-3 md:p-4 rounded-lg shadow-lg w-auto md:w-72 z-10">
+            <h2 class="text-base md:text-lg font-bold">Informasi Kisi</h2>
+            <div class="mt-2 pt-2 border-t" style="border-color: var(--panel-border-color);">
+                <div class="space-y-1 text-sm">
+                    <p><strong>Bilangan Koordinasi:</strong> <span id="lattice-coordination-number"></span></p>
+                    <p><strong>Faktor Tumpukan Atom (APF):</strong> <span id="lattice-apf"></span></p>
+                    <p><strong>Parameter Kisi (a, c):</strong> <span id="lattice-parameter-relation"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Kontrol Bawah (Slider Ekspansi Kisi) -->
+        <div id="lattice-expansion-slider-container" class="panel absolute bottom-8 left-1/2 -translate-x-1/2 w-4/5 max-w-xs p-2 rounded-lg shadow-lg z-10 slider-container">
+            <label for="lattice-expansion-slider" class="text-xs text-center block mb-1">Ekspansi</label>
+            <input type="range" id="lattice-expansion-slider" min="0.5" max="2.0" step="0.01" value="1.0">
         </div>
     </div>
 
+    
+    <!-- Tombol About di kanan bawah -->
+    <button id="about-btn" class="icon-btn absolute right-2 md:right-4 bottom-8 z-10" aria-label="Buka Tentang">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </button>
     
     <!-- Modal Tabel Periodik -->
     <div id="periodic-table-modal" class="modal hidden fixed inset-0 z-20 flex justify-center items-center transition-opacity duration-300 p-4">
@@ -343,6 +452,34 @@
         </div>
     </div>
 
+    <!-- Modal Tentang -->
+    <div id="about-modal" class="modal hidden fixed inset-0 z-30 flex justify-center items-center p-4">
+        <div id="about-modal-backdrop" class="absolute inset-0"></div>
+        <div class="modal-container p-6 rounded-lg shadow-lg text-left w-full max-w-md relative">
+            <button id="close-about-btn" class="absolute top-3 right-3 icon-btn w-8 h-8 flex items-center justify-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 class="text-xl font-bold mb-4" style="color: var(--text-color);">Tentang</h3>
+            <div class="space-y-2 text-sm">
+                <p class="font-bold" style="color: var(--text-color);">Kelompok 7 Mata Kuliah Fisika Zat Padat</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Akbar Kurniawan (08021282328046)</li>
+                    <li>Hanifati Nabillah Amru (08021182328010)</li>
+                    <li>Nahdah Isma Rosalina (08021182328002)</li>
+                    <li>Rinche Lianita D.P.A (08021282328062)</li>
+                </ul>
+            </div>
+            <div class="mt-6 pt-4 border-t space-y-2" style="border-color: var(--panel-border-color);">
+                 <p class="font-bold text-sm" style="color: var(--text-color);">Catatan Developer</p>
+                 <p class="text-xs">
+                    Website ini dikembangkan menggunakan HTML, CSS, dan bahasa pemrograman JavaScript. Terima kasih kepada anggota Kelompok 7 yang telah memberikan masukan dan arahan sehingga proyek ini berhasil diselesaikan.
+                 </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="absolute bottom-2 w-full text-center text-xs z-0">
         <p id="footer-text" class="opacity-60">&copy; 2025 Akbar-Kurnia1. All rights reserved.</p>
@@ -355,20 +492,38 @@
         const MAX_PROTONS = 118;
         const MAX_NEUTRONS = 180;
         const MAX_ELECTRONS = 118;
-        const PERFORMANCE_THRESHOLD = 37;
+        const PERFORMANCE_THRESHOLD = 80;
+        const ELECTRON_SHELLS = [2, 10, 28, 60, 92, 110, Infinity];
+        const LATTICE_CONSTANT = 4; // Parameter 'a' untuk kisi kubik
+        const HCP_C_RATIO = 1.633; // c/a ratio ideal untuk HCP
 
         // --- VARIABEL GLOBAL & STATE ---
         let scene, camera, renderer, controls;
-        const atomGroup = new THREE.Group(); // Grup untuk semua objek atom
-        const latticeGroup = new THREE.Group(); // Grup untuk semua objek kisi
+        const atomGroup = new THREE.Group(); 
+        const latticeGroup = new THREE.Group(); 
+        const coordinationLinesGroup = new THREE.Group();
 
         let protons = [], neutrons = [], electronObjects = [];
         let countdownInterval = null;
+        let unitCellOutline;
+
+        // OPTIMISASI: Geometri & material yang dapat digunakan kembali
+        const protonGeometry = new THREE.SphereGeometry(PARTICLE_RADIUS, 32, 32);
+        const neutronGeometry = new THREE.SphereGeometry(PARTICLE_RADIUS, 32, 32);
+        const electronGeometry = new THREE.SphereGeometry(PARTICLE_RADIUS / 3, 16, 16);
+        const latticeAtomGeometry = new THREE.SphereGeometry(1, 32, 32); // Radius 1 untuk atom kisi
+
+        const protonMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 });
+        const neutronMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.5 });
+        const electronMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.5 });
+        const latticeAtomMaterial = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, roughness: 0.4, metalness: 0.2 });
+        const coordinationLineMaterial = new THREE.LineBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.7 });
+
         
         // State utama aplikasi
         const appState = {
             // State umum
-            simulationMode: 'atom', // 'atom' atau 'lattice'
+            simulationMode: 'atom', 
             
             // State mode atom
             protons: 1,
@@ -380,14 +535,89 @@
             nucleusExpansionFactor: 1.0,
             is3DView: true,
 
-            // State mode kisi (placeholder)
-            latticeType: 'sc', // simple cubic
+            // State mode kisi
+            latticeType: 'sc', // 'sc', 'bcc', 'fcc', 'hcp'
+            latticeDisplayMode: 'unit-cell', // 'unit-cell', 'layer', 'coordination', 'single'
+            latticeExpansion: 1.0,
+            isUnitCellVisible: true,
         };
+        
+        // --- DATA STRUKTUR KISI ---
+        const LATTICE_DEFINITIONS = {
+            sc: {
+                name: "Simple Cubic",
+                coordinationNumber: 6,
+                apf: 0.52,
+                relation: "a = 2R",
+                unitCell: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1] ],
+                coordination: {
+                    center: [0.5, 0.5, 0.5],
+                    neighbors: [ [-0.5, 0.5, 0.5], [1.5, 0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 1.5, 0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 1.5] ]
+                },
+                layer: [ [0,0,0], [1,0,0], [0,1,0], [1,1,0] ],
+            },
+            bcc: {
+                name: "Body-Centered Cubic",
+                coordinationNumber: 8,
+                apf: 0.68,
+                relation: "a = 4R / &radic;3",
+                unitCell: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1], [0.5,0.5,0.5] ],
+                coordination: {
+                    center: [0.5, 0.5, 0.5],
+                    neighbors: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1] ]
+                },
+                layer: [ [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,1] ],
+            },
+            fcc: {
+                name: "Face-Centered Cubic",
+                coordinationNumber: 12,
+                apf: 0.74,
+                relation: "a = 2R&radic;2",
+                unitCell: [
+                    [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1], // Corners
+                    [0.5,0.5,0], [0.5,0.5,1], [0,0.5,0.5], [1,0.5,0.5], [0.5,0,0.5], [0.5,1,0.5] // Faces
+                ],
+                coordination: {
+                    center: [0.5, 0.5, 0.5],
+                    neighbors: [ [0.5,0,0.5], [0.5,1,0.5], [0,0.5,0.5], [1,0.5,0.5], [0.5,0.5,0], [0.5,0.5,1] ]
+                },
+                layer: [ [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,0] ],
+            },
+            hcp: {
+                name: "Hexagonal Close-Packed",
+                coordinationNumber: 12,
+                apf: 0.74,
+                relation: "a = 2R, c = 1.633a",
+                unitCell: [ // 17 atom representation for clarity
+                    // Bottom face (z=0)
+                    [1, 0, 0], [0.5, 0.866, 0], [-0.5, 0.866, 0], [-1, 0, 0], [-0.5, -0.866, 0], [0.5, -0.866, 0], [0,0,0],
+                    // Middle layer (z=c/2)
+                    [0.5, 0.289, 0.5 * HCP_C_RATIO], [-0.5, 0.289, 0.5 * HCP_C_RATIO], [0, -0.577, 0.5 * HCP_C_RATIO],
+                    // Top face (z=c)
+                    [1, 0, HCP_C_RATIO], [0.5, 0.866, HCP_C_RATIO], [-0.5, 0.866, HCP_C_RATIO], [-1, 0, HCP_C_RATIO], [-0.5, -0.866, HCP_C_RATIO], [0.5, -0.866, HCP_C_RATIO], [0,0,HCP_C_RATIO]
+                ],
+                coordination: {
+                    center: [0, 0, 0.5 * HCP_C_RATIO],
+                    neighbors: [
+                        // 6 on the same plane (z=c/2)
+                        [1, 0, 0.5 * HCP_C_RATIO], [-1, 0, 0.5 * HCP_C_RATIO],
+                        [0.5, 0.866, 0.5 * HCP_C_RATIO], [-0.5, 0.866, 0.5 * HCP_C_RATIO],
+                        [0.5, -0.866, 0.5 * HCP_C_RATIO], [-0.5, -0.866, 0.5 * HCP_C_RATIO],
+                        // 3 below (z=0)
+                        [0.5, 0.289, 0], [-0.5, 0.289, 0], [0, -0.577, 0],
+                        // 3 above (z=c)
+                        [0.5, 0.289, HCP_C_RATIO], [-0.5, 0.289, HCP_C_RATIO], [0, -0.577, HCP_C_RATIO]
+                    ]
+                },
+                layer: [ [1, 0, 0], [0.5, 0.866, 0], [-0.5, 0.866, 0], [-1, 0, 0], [-0.5, -0.866, 0], [0.5, -0.866, 0], [0,0,0] ],
+            }
+        };
+
 
         // Kumpulan referensi elemen DOM untuk efisiensi
         const domElements = {};
 
-        // Data lengkap untuk 118 unsur
+        // Data lengkap untuk 118 unsur (tidak diubah)
         const ELEMENT_DATA = [
             null,
             {name:"Hidrogen",symbol:"H",commonNeutrons:0,stableNeutrons:[0,1],phase:"Gas",usage:"Bahan bakar bintang.",type:"nonmetal",config:"1s<sup class='-top-1'>1</sup>"},
@@ -515,15 +745,23 @@
             // Mengisi objek referensi DOM
             cacheDOMElements();
             
+            // Atur mode terang sebagai default
+            document.body.classList.add('light-mode');
+            updateThemeUI(true); 
+            
             // Setup Scene, Camera, Renderer
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 20;
-            renderer = new THREE.WebGLRenderer({ canvas: domElements.canvas, antialias: true, alpha: true });
+            renderer = new THREE.WebGLRenderer({ canvas: domElements.bg, antialias: true, alpha: true });
             renderer.setClearColor(0x000000, 0);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Tambahkan kedua grup ke scene, visibilitas akan diatur nanti
             scene.add(atomGroup);
+            scene.add(latticeGroup);
+            latticeGroup.add(coordinationLinesGroup);
 
             // Setup Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -540,7 +778,6 @@
             
             // Inisialisasi mode awal
             updateUIMode();
-            initAtomMode();
 
             // Mulai loop animasi
             animate();
@@ -549,7 +786,7 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            if(appState.simulationMode === 'atom') {
+            if(appState.simulationMode === 'atom' && atomGroup.visible) {
                 // Animasikan pergerakan elektron
                 electronObjects.forEach(e => {
                     e.angle += e.speed;
@@ -568,48 +805,212 @@
 
         function toggleSimulationMode() {
             appState.simulationMode = appState.simulationMode === 'atom' ? 'lattice' : 'atom';
-            
-            // Hapus semua objek 3D dari scene
-            clearAtom();
-            while(latticeGroup.children.length > 0) latticeGroup.remove(latticeGroup.children[0]);
-
             updateUIMode();
-
-            if (appState.simulationMode === 'atom') {
-                initAtomMode();
-            } else {
-                initLatticeMode();
-            }
         }
         
         function updateUIMode() {
             const isAtomMode = appState.simulationMode === 'atom';
-            domElements.atomSimUI.classList.toggle('hidden', !isAtomMode);
-            domElements.latticeSimUI.classList.toggle('hidden', isAtomMode);
+
+            // Atur visibilitas grup 3D
+            atomGroup.visible = isAtomMode;
+            latticeGroup.visible = !isAtomMode;
+
+            // Atur visibilitas UI
+            domElements.atomSimUi.classList.toggle('hidden', !isAtomMode);
+            domElements.latticeSimUi.classList.toggle('hidden', isAtomMode);
+            
+            // Tampilkan/sembunyikan panel info yang sesuai
+            domElements.latticeInfoPanel.classList.toggle('hidden', isAtomMode);
+            domElements.infoPanel.classList.toggle('hidden', !isAtomMode);
+
 
             if(isAtomMode){
                 domElements.mainTitle.textContent = "Simulasi Atom";
                 domElements.mainSubtitle.textContent = "Visualisasi struktur atom.";
                 domElements.modeSwitchBtn.textContent = "Mode Kisi";
+                if (atomGroup.children.length === 0) {
+                     initAtomMode();
+                }
             } else {
                 domElements.mainTitle.textContent = "Simulasi Struktur Kisi";
-                domElements.mainSubtitle.textContent = "Visualisasikan susunan atom dalam kristal.";
+                const latticeName = LATTICE_DEFINITIONS[appState.latticeType].name;
+                domElements.mainSubtitle.textContent = `Visualisasi Kisi Kristal: ${latticeName}`;
                 domElements.modeSwitchBtn.textContent = "Mode Atom";
+                initLatticeMode();
             }
         }
         
         function initAtomMode() {
-            scene.add(atomGroup);
             populatePeriodicTable();
             buildAtomFromState();
         }
 
         function initLatticeMode() {
-            scene.add(latticeGroup);
-            const geometry = new THREE.BoxGeometry(5, 5, 5);
-            const material = new THREE.MeshNormalMaterial();
-            const cube = new THREE.Mesh(geometry, material);
-            latticeGroup.add(cube);
+            const type = appState.latticeType;
+            if(type === 'hcp') {
+                 camera.position.set(LATTICE_CONSTANT * 1.5, LATTICE_CONSTANT * 2.5, LATTICE_CONSTANT * 3);
+                 controls.target.set(0, 0, LATTICE_CONSTANT * HCP_C_RATIO / 2);
+            } else {
+                camera.position.set(10, 10, 15); 
+                controls.target.set(LATTICE_CONSTANT / 2, LATTICE_CONSTANT / 2, LATTICE_CONSTANT / 2);
+            }
+            buildLattice();
+        }
+
+
+        // --- FUNGSI PEMBENTUKAN KISI ---
+        
+        function buildLattice() {
+            clearLattice();
+            
+            const type = appState.latticeType;
+            const displayMode = appState.latticeDisplayMode;
+            const definition = LATTICE_DEFINITIONS[type];
+
+            domElements.mainSubtitle.textContent = `Visualisasi Kisi Kristal: ${definition.name}`;
+            
+            unitCellOutline = createOutline();
+            unitCellOutline.visible = appState.isUnitCellVisible;
+            latticeGroup.add(unitCellOutline);
+
+            let positions = [];
+            
+            switch(displayMode) {
+                case 'unit-cell':
+                    positions = definition.unitCell;
+                    break;
+                case 'layer':
+                    positions = definition.layer;
+                    break;
+                case 'coordination':
+                    drawCoordination(definition.coordination);
+                    break;
+                case 'single':
+                     positions = type === 'hcp' ? [[0, 0, 0.5 * HCP_C_RATIO]] : [[0.5, 0.5, 0.5]];
+                     break;
+            }
+            
+            if (displayMode !== 'coordination') {
+                 positions.forEach(pos => {
+                    const atom = createLatticeAtom(false);
+                    let scale = (type === 'hcp') ? LATTICE_CONSTANT/2 : LATTICE_CONSTANT;
+                    atom.position.set(pos[0] * scale, pos[1] * scale, pos[2] * scale);
+                    latticeGroup.add(atom);
+                });
+            }
+            
+            updateLatticeInfoPanel();
+            applyLatticeExpansion();
+        }
+        
+        function clearLattice() {
+            while(latticeGroup.children.length > 0) {
+                const child = latticeGroup.children[0];
+                latticeGroup.remove(child);
+            }
+            while(coordinationLinesGroup.children.length > 0) {
+                 coordinationLinesGroup.remove(coordinationLinesGroup.children[0]);
+            }
+            latticeGroup.add(coordinationLinesGroup);
+        }
+
+        function createLatticeAtom(isCenter) {
+            const material = isCenter ? new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.4, metalness: 0.2 }) : latticeAtomMaterial.clone();
+            const atomRadius = appState.latticeType === 'hcp' ? 0.5 : 1;
+            const geometry = new THREE.SphereGeometry(atomRadius, 32, 32);
+            return new THREE.Mesh(geometry, material);
+        }
+        
+        function drawCoordination(coordinationData) {
+            const scale = (appState.latticeType === 'hcp') ? LATTICE_CONSTANT/2 : LATTICE_CONSTANT;
+
+            // Create and position central atom
+            const centerPosArr = coordinationData.center.map(p => p * scale);
+            const centerAtom = createLatticeAtom(true);
+            centerAtom.position.set(...centerPosArr);
+            latticeGroup.add(centerAtom);
+
+            // Create, position neighbors and draw lines
+            coordinationData.neighbors.forEach(pos => {
+                const neighborPosArr = pos.map(p => p * scale);
+                const neighborAtom = createLatticeAtom(false);
+                neighborAtom.position.set(...neighborPosArr);
+                latticeGroup.add(neighborAtom);
+                
+                const points = [new THREE.Vector3(...centerPosArr), new THREE.Vector3(...neighborPosArr)];
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(lineGeo, coordinationLineMaterial);
+                coordinationLinesGroup.add(line);
+            });
+        }
+        
+        function createOutline() {
+            const isLightMode = document.body.classList.contains('light-mode');
+            const color = isLightMode ? 0x374151 : 0x9ca3af;
+            const material = new THREE.LineBasicMaterial({ color: color });
+
+            if (appState.latticeType === 'hcp') {
+                const a = LATTICE_CONSTANT / 2;
+                const c = (LATTICE_CONSTANT / 2) * HCP_C_RATIO;
+                const R = (LATTICE_CONSTANT/2);
+
+                const points = [];
+                // bottom hexagon
+                for (let i = 0; i < 6; i++) {
+                    points.push(new THREE.Vector3(R * Math.cos(i/6 * Math.PI * 2), R * Math.sin(i/6 * Math.PI * 2), 0));
+                }
+                // top hexagon
+                 for (let i = 0; i < 6; i++) {
+                    points.push(new THREE.Vector3(R * Math.cos(i/6 * Math.PI * 2), R * Math.sin(i/6 * Math.PI * 2), c));
+                }
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.LineSegments(geometry, material);
+
+                const linesGeo = new THREE.BufferGeometry();
+                const linePoints = [];
+                // Bottom
+                for(let i=0; i<6; i++) { linePoints.push(points[i], points[(i+1)%6]); }
+                // Top
+                for(let i=0; i<6; i++) { linePoints.push(points[i+6], points[((i+1)%6)+6]); }
+                // Sides
+                for(let i=0; i<6; i++) { linePoints.push(points[i], points[i+6]); }
+                
+                linesGeo.setFromPoints(linePoints);
+                return new THREE.LineSegments(linesGeo, material);
+            } else {
+                const size = LATTICE_CONSTANT;
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, material);
+                line.position.set(size / 2, size / 2, size / 2);
+                return line;
+            }
+        }
+        
+        function applyLatticeExpansion() {
+            const expansion = appState.latticeExpansion;
+            let center;
+
+            if (appState.latticeType === 'hcp') {
+                center = new THREE.Vector3(0, 0, (LATTICE_CONSTANT / 2 * HCP_C_RATIO) / 2);
+            } else {
+                center = new THREE.Vector3(LATTICE_CONSTANT / 2, LATTICE_CONSTANT / 2, LATTICE_CONSTANT / 2);
+            }
+            
+            const applyExpansionToGroup = (group) => {
+                 group.children.forEach(child => {
+                    const originalPos = child.userData.originalPosition;
+                    if (!originalPos) {
+                        child.userData.originalPosition = child.position.clone();
+                    }
+                    const direction = new THREE.Vector3().subVectors(child.userData.originalPosition, center);
+                    child.position.copy(center).addScaledVector(direction, expansion);
+                });
+            };
+
+            applyExpansionToGroup(latticeGroup);
+            applyExpansionToGroup(coordinationLinesGroup);
         }
 
 
@@ -641,36 +1042,28 @@
         }
 
         function clearAtom() {
-            while(atomGroup.children.length > 0) atomGroup.remove(atomGroup.children[0]);
+            while(atomGroup.children.length > 0) {
+                const child = atomGroup.children[0];
+                atomGroup.remove(child);
+            }
             protons = [];
             neutrons = [];
             electronObjects = [];
         }
 
         function createParticle(type) {
-            const geometry = new THREE.SphereGeometry(PARTICLE_RADIUS, 32, 32);
-            const color = type === 'proton' ? 0xff0000 : 0x808080;
-            const material = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
-            return new THREE.Mesh(geometry, material);
+            if (type === 'proton') return new THREE.Mesh(protonGeometry, protonMaterial);
+            return new THREE.Mesh(neutronGeometry, neutronMaterial);
         }
 
         function createElectron(index) {
-            const geometry = new THREE.SphereGeometry(PARTICLE_RADIUS / 3, 16, 16);
-            const material = new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.5 });
-            const mesh = new THREE.Mesh(geometry, material);
-            
-            let shellIndex;
-            if (index < 2) shellIndex = 0;      // K
-            else if (index < 10) shellIndex = 1; // L
-            else if (index < 28) shellIndex = 2; // M
-            else if (index < 60) shellIndex = 3; // N
-            else if (index < 92) shellIndex = 4; // O
-            else if (index < 110) shellIndex = 5; // P
-            else shellIndex = 6;                 // Q
+            const mesh = new THREE.Mesh(electronGeometry, electronMaterial);
+            const shellIndex = ELECTRON_SHELLS.findIndex(capacity => index < capacity);
             
             const orbitRadius = 5 + shellIndex * 2.5;
             const angle = Math.random() * Math.PI * 2;
             const speed = 0.01 / (shellIndex + 1);
+            
             const orbitGeometry = new THREE.TorusGeometry(orbitRadius, 0.05, 16, 100);
             const isLightMode = document.body.classList.contains('light-mode');
             const orbitColor = isLightMode ? 0xAAAAAA : 0x444444;
@@ -690,95 +1083,52 @@
             if (nucleons.length === 0) return;
 
             if (appState.isNucleusStructured) {
-                // Mode 1: Structured Grid Layout
                 const spacing = PARTICLE_RADIUS * 2.5;
                 const n = nucleons.length;
                 const side = Math.ceil(Math.cbrt(n));
                 const offset = - (side - 1) * spacing / 2;
-                
                 let i = 0;
-                for (let z = 0; z < side; z++) {
-                    for (let y = 0; y < side; y++) {
-                        for (let x = 0; x < side; x++) {
-                            if (i < n) {
-                                nucleons[i].position.set(offset + x * spacing, offset + y * spacing, offset + z * spacing);
-                                i++;
-                            }
-                        }
-                    }
-                }
+                for (let z = 0; z < side; z++) for (let y = 0; y < side; y++) for (let x = 0; x < side; x++) if (i < n) nucleons[i++].position.set(offset + x * spacing, offset + y * spacing, offset + z * spacing);
             } else if (appState.isNucleusSeparated) {
-                // Mode 2: Separated Hollow Sphere
                 const radius = NUCLEUS_SEPARATION_FACTOR * 2;
                  nucleons.forEach((nucleon, i) => {
                     const phi = Math.acos(-1 + (2 * i) / nucleons.length);
                     const theta = Math.sqrt(nucleons.length * Math.PI) * phi;
-                    nucleon.position.set(
-                        radius * Math.cos(theta) * Math.sin(phi),
-                        radius * Math.sin(theta) * Math.sin(phi),
-                        radius * Math.cos(phi)
-                    );
+                    nucleon.position.set(radius * Math.cos(theta) * Math.sin(phi), radius * Math.sin(theta) * Math.sin(phi), radius * Math.cos(phi));
                 });
             } else {
-                // Mode 3 & 4: Symmetrical Close-Packing (Default and Expanded)
                 const particleDiameter = PARTICLE_RADIUS * 2;
-                if (nucleons.length === 1) {
-                    nucleons[0].position.set(0, 0, 0);
-                    return;
-                }
+                if (nucleons.length === 1) { nucleons[0].position.set(0, 0, 0); return; }
                 
                 let positions = [new THREE.Vector3(0,0,0)];
                 for (let i = 1; i < nucleons.length; i++) {
                     let bestPos = null;
                     let minTotalDistSq = Infinity;
-
                     for (let j = 0; j < positions.length; j++) {
                         for (let k = 0; k < 12; k++) { 
                             const phi = Math.acos(1 - 2 * (k + 0.5) / 12);
                             const theta = Math.PI * (1 + Math.sqrt(5)) * (k + 0.5);
-                            const testDir = new THREE.Vector3(
-                                Math.cos(theta) * Math.sin(phi),
-                                Math.sin(theta) * Math.sin(phi),
-                                Math.cos(phi)
-                            );
+                            const testDir = new THREE.Vector3(Math.cos(theta) * Math.sin(phi), Math.sin(theta) * Math.sin(phi), Math.cos(phi));
                             const testPos = new THREE.Vector3().addVectors(positions[j], testDir.multiplyScalar(particleDiameter));
-                            
-                            let overlaps = false;
-                            for(let l=0; l<positions.length; l++) {
-                                if(testPos.distanceToSquared(positions[l]) < (particleDiameter * 0.99)**2) {
-                                    overlaps = true;
-                                    break;
-                                }
-                            }
+                            let overlaps = positions.some(p => testPos.distanceToSquared(p) < (particleDiameter * 0.99)**2);
                             if(overlaps) continue;
-                            
                             const totalDistSq = testPos.lengthSq();
-                            if (totalDistSq < minTotalDistSq) {
-                                minTotalDistSq = totalDistSq;
-                                bestPos = testPos;
-                            }
+                            if (totalDistSq < minTotalDistSq) { minTotalDistSq = totalDistSq; bestPos = testPos; }
                         }
                     }
-                     positions.push(bestPos || new THREE.Vector3(i * particleDiameter, 0, 0));
+                    positions.push(bestPos || new THREE.Vector3(i * particleDiameter, 0, 0));
                 }
-                
                 const center = new THREE.Vector3();
                 positions.forEach(p => center.add(p));
                 center.divideScalar(positions.length);
                 positions.forEach(p => p.sub(center));
-
                 nucleons.forEach((n, i) => n.position.copy(positions[i]));
-
-                if (appState.isNucleusExpanded) {
-                     nucleons.forEach(n => {
-                        n.position.multiplyScalar(appState.nucleusExpansionFactor);
-                    });
-                }
+                if (appState.isNucleusExpanded) nucleons.forEach(n => n.position.multiplyScalar(appState.nucleusExpansionFactor));
             }
         }
 
 
-        // --- FUNGSI KONTROL & INTERAKSI (REFACTORED) ---
+        // --- FUNGSI KONTROL & INTERAKSI ---
         function updateParticleCount(type, delta) {
             const state = appState;
             let currentVal = state[type];
@@ -790,10 +1140,7 @@
             
             state[type] = newVal;
             
-            // Menjaga netralitas saat proton diubah
-            if(type === 'protons') {
-                state.electrons = Math.min(MAX_ELECTRONS, Math.max(0, state.electrons + delta));
-            }
+            if(type === 'protons') state.electrons = Math.min(MAX_ELECTRONS, Math.max(0, state.electrons + delta));
             
             buildAtomFromState();
         }
@@ -808,14 +1155,13 @@
             appState.nucleusExpansionFactor = 1;
             appState.is3DView = true;
             
-            domElements.expansionSlider.value = 1;
+            domElements.atomExpansionSlider.value = 1;
             domElements.viewToggleText.textContent = '2D';
             
-            updateUINucleusModes(); // Update all UI states at once
+            updateUINucleusModes();
             buildAtomFromState();
         }
         
-        // PERBAIKAN: Logika toggle yang lebih robust
         function toggleNucleusSeparation() {
             const wasOn = appState.isNucleusSeparated;
             setAllNucleusModesOff();
@@ -852,15 +1198,15 @@
             domElements.structureToggleBtn.classList.toggle('active', appState.isNucleusStructured);
             domElements.expansionToggleBtn.classList.toggle('active', appState.isNucleusExpanded);
             if (appState.isNucleusExpanded) {
-                domElements.expansionSliderContainer.classList.remove('hidden');
-                setTimeout(() => domElements.expansionSliderContainer.classList.remove('opacity-0'), 10);
+                domElements.atomExpansionSliderContainer.classList.remove('hidden');
+                setTimeout(() => domElements.atomExpansionSliderContainer.classList.remove('opacity-0'), 10);
             } else {
-                domElements.expansionSliderContainer.classList.add('opacity-0');
-                setTimeout(() => domElements.expansionSliderContainer.classList.add('hidden'), 300);
+                domElements.atomExpansionSliderContainer.classList.add('opacity-0');
+                setTimeout(() => domElements.atomExpansionSliderContainer.classList.add('hidden'), 300);
             }
         }
 
-        function handleExpansionSlider(event) {
+        function handleAtomExpansionSlider(event) {
             appState.nucleusExpansionFactor = parseFloat(event.target.value);
             arrangeNucleons();
         }
@@ -869,6 +1215,14 @@
             appState.is3DView = !appState.is3DView;
             domElements.viewToggleText.textContent = appState.is3DView ? '2D' : '3D';
             buildAtomFromState();
+        }
+        
+        function toggleOutlineVisibility() {
+            appState.isUnitCellVisible = !appState.isUnitCellVisible;
+            if (unitCellOutline) {
+                unitCellOutline.visible = appState.isUnitCellVisible;
+            }
+            domElements.toggleOutlineBtn.textContent = appState.isUnitCellVisible ? 'Sembunyikan Sel' : 'Tampilkan Sel';
         }
 
         function zoom(factor) { camera.position.multiplyScalar(factor); }
@@ -880,16 +1234,22 @@
 
         function updateThemeUI(isInitial = false) {
              const isLightMode = document.body.classList.contains('light-mode');
-             if(!isInitial) { // Hanya update orbit jika bukan pemanggilan awal
+             if(!isInitial) { 
                 const orbitColor = isLightMode ? 0xAAAAAA : 0x444444;
+                const outlineColor = isLightMode ? 0x374151 : 0x9ca3af;
+                
                 atomGroup.children.forEach(child => {
                     if (child.material && child.material.isLineBasicMaterial) {
                         child.material.color.setHex(orbitColor);
                     }
                 });
+
+                if (unitCellOutline) {
+                    unitCellOutline.material.color.setHex(outlineColor);
+                }
              }
-            domElements.sunIcon.classList.toggle('hidden', !isLightMode);
-            domElements.moonIcon.classList.toggle('hidden', isLightMode);
+            domElements.sunIcon.classList.toggle('hidden', isLightMode);
+            domElements.moonIcon.classList.toggle('hidden', !isLightMode);
         }
 
 
@@ -900,6 +1260,10 @@
         
         function togglePeriodicTable() { domElements.periodicTableModal.classList.toggle('hidden'); }
 
+        function toggleAboutModal() {
+            domElements.aboutModal.classList.toggle('hidden');
+        }
+
         function showPerformanceWarning(atomicNumber, neutronCount) {
             togglePeriodicTable();
             const continueBtn = domElements.continueWarningBtn;
@@ -908,11 +1272,11 @@
             continueBtn.dataset.neutronCount = neutronCount;
 
             continueBtn.disabled = true;
-            continueBtn.innerHTML = `Lanjutkan (<span id="countdown-timer">10</span>)`;
+            continueBtn.innerHTML = `Lanjutkan (<span id="countdown-timer">5</span>)`;
             
             domElements.performanceWarningModal.classList.remove('hidden');
             
-            let countdown = 10;
+            let countdown = 5;
             const timerSpan = document.getElementById('countdown-timer');
 
             if (countdownInterval) clearInterval(countdownInterval);
@@ -944,7 +1308,7 @@
                 appState.electrons = atomicNumber;
                 buildAtomFromState();
             }
-            cancelWarning(); // Tutup modal setelah melanjutkan
+            cancelWarning();
         }
 
         // --- FUNGSI PEMBANTU & UI ---
@@ -968,7 +1332,7 @@
                 const cell = document.createElement('div');
                 if (num > 0 && ELEMENT_DATA[num]) {
                     const data = ELEMENT_DATA[num];
-                    cell.className = `element-cell p-1 rounded-md cat-${data.type}`;
+                    cell.className = `element-cell p-1 rounded-md cursor-pointer cat-${data.type}`;
                     cell.dataset.atomicNumber = num;
                     cell.title = data.name;
                     cell.innerHTML = `<div class="font-bold text-sm">${data.symbol}</div><div class="text-xs">${num}</div>`;
@@ -997,7 +1361,7 @@
             if(numProtons === 0) return;
             const numNeutrons = appState.neutrons;
             const massNumber = numProtons + numNeutrons;
-            const data = ELEMENT_DATA[numProtons] || { name: `Unsur #${numProtons}`, phase: '-', usage: '-' };
+            const data = ELEMENT_DATA[numProtons] || { name: `Unsur #${numProtons}`, phase: '-', usage: '-', stableNeutrons: [] };
             const charge = numProtons - appState.electrons;
 
             domElements.elementName.textContent = data.name;
@@ -1014,50 +1378,47 @@
                  stabilitySpan.textContent = 'Radioaktif';
                  stabilitySpan.className = 'font-bold stability-tidak-stabil';
             } else {
-                 const stable = ELEMENT_DATA[numProtons].stableNeutrons ? ELEMENT_DATA[numProtons].stableNeutrons.includes(numNeutrons) : false;
+                 const stable = data.stableNeutrons.includes(numNeutrons);
                  stabilitySpan.textContent = stable ? 'Stabil' : 'Tidak Stabil';
                  stabilitySpan.className = `font-bold ${stable ? 'stability-stabil' : 'stability-tidak-stabil'}`;
             }
         }
+        
+        function updateLatticeInfoPanel() {
+            const type = appState.latticeType;
+            const data = LATTICE_DEFINITIONS[type];
+
+            if (!data) return;
+
+            domElements.latticeCoordinationNumber.textContent = data.coordinationNumber;
+            domElements.latticeApf.textContent = data.apf;
+            domElements.latticeParameterRelation.innerHTML = data.relation;
+        }
 
         // Fungsi untuk mengambil semua referensi elemen DOM sekali saja
         function cacheDOMElements() {
-            domElements.canvas = document.querySelector('#bg');
-            // Panel Utama
-            domElements.titlePanel = document.getElementById('title-panel');
-            domElements.mainTitle = document.getElementById('main-title');
-            domElements.mainSubtitle = document.getElementById('main-subtitle');
-            domElements.modeSwitchBtn = document.getElementById('mode-switch-btn');
-            // Wrapper UI
-            domElements.atomSimUI = document.getElementById('atom-sim-ui');
-            domElements.latticeSimUI = document.getElementById('lattice-sim-ui');
-            // Panel Info Atom
-            domElements.infoPanel = document.getElementById('info-panel');
-            domElements.showInfoBtn = document.getElementById('show-info-btn');
-            domElements.elementName = document.getElementById('element-name');
-            domElements.atomicNumber = document.getElementById('atomic-number');
-            domElements.massNumber = document.getElementById('mass-number');
-            domElements.charge = document.getElementById('charge');
-            domElements.isotopeName = document.getElementById('isotope-name');
-            domElements.coreStability = document.getElementById('core-stability');
-            domElements.elementPhase = document.getElementById('element-phase');
-            domElements.elementUsage = document.getElementById('element-usage');
-            domElements.electronConfigString = document.getElementById('electron-config-string');
-            // Kontrol Samping Atom
-            domElements.viewToggleText = document.getElementById('view-toggle-text');
-            domElements.sunIcon = document.getElementById('sun-icon');
-            domElements.moonIcon = document.getElementById('moon-icon');
-            domElements.structureToggleBtn = document.getElementById('structure-toggle-btn');
-            domElements.expansionToggleBtn = document.getElementById('expansion-toggle-btn');
-            domElements.expansionSliderContainer = document.getElementById('expansion-slider-container');
-            domElements.expansionSlider = document.getElementById('expansion-slider');
-            // Kontrol Bawah Atom
-            domElements.toggleNucleus = document.getElementById('toggle-nucleus');
-            // Modal
-            domElements.periodicTableModal = document.getElementById('periodic-table-modal');
-            domElements.performanceWarningModal = document.getElementById('performance-warning-modal');
-            domElements.continueWarningBtn = document.getElementById('continue-warning-btn');
-            domElements.periodicTableGrid = document.getElementById('periodic-table-grid');
+            const ids = [
+                'bg', 'title-panel', 'main-title', 'main-subtitle', 'mode-switch-btn',
+                'atom-sim-ui', 'lattice-sim-ui', 'info-panel', 'show-info-btn',
+                'element-name', 'atomic-number', 'mass-number', 'charge', 'isotope-name',
+                'core-stability', 'element-phase', 'element-usage', 'electron-config-string',
+                'view-toggle-text', 'sun-icon', 'moon-icon', 'structure-toggle-btn',
+                'expansion-toggle-btn', 'atom-expansion-slider-container', 'atom-expansion-slider',
+                'toggle-nucleus', 'periodic-table-modal', 'performance-warning-modal',
+                'continue-warning-btn', 'periodic-table-grid', 'info-header',
+                'periodic-table-backdrop', 'cancel-warning-btn', 'add-proton', 'add-neutron',
+                'add-electron', 'remove-proton', 'remove-neutron', 'remove-electron',
+                'reset-atom', 'periodic-table-btn', 'theme-toggle-btn', 'view-toggle-btn',
+                'zoom-in-btn', 'zoom-out-btn', 'about-btn', 'about-modal', 'close-about-btn', 'about-modal-backdrop',
+                'lattice-controls-panel', 'lattice-type-select', 'lattice-display-controls', 
+                'lattice-expansion-slider-container', 'lattice-expansion-slider',
+                'lattice-info-panel', 'lattice-coordination-number', 'lattice-apf', 'lattice-parameter-relation',
+                'toggle-outline-btn'
+            ];
+            ids.forEach(id => {
+                const camelCaseId = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                domElements[camelCaseId] = document.getElementById(id);
+            });
         }
 
         function setupEventListeners() {
@@ -1068,30 +1429,48 @@
             });
             // Kontrol Global
             domElements.modeSwitchBtn.addEventListener('click', toggleSimulationMode);
-            // Main controls
-            document.getElementById('add-proton').addEventListener('click', () => updateParticleCount('protons', 1));
-            document.getElementById('add-neutron').addEventListener('click', () => updateParticleCount('neutrons', 1));
-            document.getElementById('add-electron').addEventListener('click', () => updateParticleCount('electrons', 1));
-            document.getElementById('remove-proton').addEventListener('click', () => updateParticleCount('protons', -1));
-            document.getElementById('remove-neutron').addEventListener('click', () => updateParticleCount('neutrons', -1));
-            document.getElementById('remove-electron').addEventListener('click', () => updateParticleCount('electrons', -1));
-            document.getElementById('toggle-nucleus').addEventListener('click', toggleNucleusSeparation);
-            document.getElementById('reset-atom').addEventListener('click', resetAtom);
-            // Side controls
-            document.getElementById('periodic-table-btn').addEventListener('click', togglePeriodicTable);
-            document.getElementById('structure-toggle-btn').addEventListener('click', toggleNucleusStructure);
-            document.getElementById('expansion-toggle-btn').addEventListener('click', toggleNucleusExpansion);
-            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
-            document.getElementById('view-toggle-btn').addEventListener('click', toggleViewMode);
-            document.getElementById('zoom-in-btn').addEventListener('click', () => zoom(0.8));
-            document.getElementById('zoom-out-btn').addEventListener('click', () => zoom(1.2));
-            // Panels and Modals
-            document.getElementById('info-header').addEventListener('click', toggleInfoPanel);
+            // Kontrol Mode Atom
+            domElements.addProton.addEventListener('click', () => updateParticleCount('protons', 1));
+            domElements.addNeutron.addEventListener('click', () => updateParticleCount('neutrons', 1));
+            domElements.addElectron.addEventListener('click', () => updateParticleCount('electrons', 1));
+            domElements.removeProton.addEventListener('click', () => updateParticleCount('protons', -1));
+            domElements.removeNeutron.addEventListener('click', () => updateParticleCount('neutrons', -1));
+            domElements.removeElectron.addEventListener('click', () => updateParticleCount('electrons', -1));
+            domElements.toggleNucleus.addEventListener('click', toggleNucleusSeparation);
+            domElements.resetAtom.addEventListener('click', resetAtom);
+            domElements.periodicTableBtn.addEventListener('click', togglePeriodicTable);
+            domElements.structureToggleBtn.addEventListener('click', toggleNucleusStructure);
+            domElements.expansionToggleBtn.addEventListener('click', toggleNucleusExpansion);
+            domElements.themeToggleBtn.addEventListener('click', toggleTheme);
+            domElements.viewToggleBtn.addEventListener('click', toggleViewMode);
+            domElements.zoomInBtn.addEventListener('click', () => zoom(0.8));
+            domElements.zoomOutBtn.addEventListener('click', () => zoom(1.2));
+            domElements.infoHeader.addEventListener('click', toggleInfoPanel);
             domElements.showInfoBtn.addEventListener('click', toggleInfoPanel); 
-            document.getElementById('periodic-table-backdrop').addEventListener('click', togglePeriodicTable);
-            document.getElementById('cancel-warning-btn').addEventListener('click', cancelWarning);
-            document.getElementById('continue-warning-btn').addEventListener('click', continueWarning);
-            domElements.expansionSlider.addEventListener('input', handleExpansionSlider);
+            domElements.periodicTableBackdrop.addEventListener('click', togglePeriodicTable);
+            domElements.cancelWarningBtn.addEventListener('click', cancelWarning);
+            domElements.continueWarningBtn.addEventListener('click', continueWarning);
+            domElements.atomExpansionSlider.addEventListener('input', handleAtomExpansionSlider);
+            // Kontrol Mode Kisi
+            domElements.latticeTypeSelect.addEventListener('change', (e) => {
+                appState.latticeType = e.target.value;
+                initLatticeMode();
+            });
+            domElements.latticeExpansionSlider.addEventListener('input', (e) => {
+                appState.latticeExpansion = parseFloat(e.target.value);
+                applyLatticeExpansion();
+            });
+            document.querySelectorAll('input[name="lattice-display"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    appState.latticeDisplayMode = e.target.value;
+                    buildLattice();
+                });
+            });
+            domElements.toggleOutlineBtn.addEventListener('click', toggleOutlineVisibility);
+            // Kontrol Modal "Tentang"
+            domElements.aboutBtn.addEventListener('click', toggleAboutModal);
+            domElements.closeAboutBtn.addEventListener('click', toggleAboutModal);
+            domElements.aboutModalBackdrop.addEventListener('click', toggleAboutModal);
         }
 
         document.addEventListener('DOMContentLoaded', init);
