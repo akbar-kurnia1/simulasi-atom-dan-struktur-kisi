@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Struktur Atom Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat pustaka Three.js dan OrbitControls secara global -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --bg-color: #111827;
+            --text-color: #e5e7eb;
+            --panel-bg-color: rgba(17, 24, 39, 0.8);
+            --panel-border-color: rgba(255, 255, 255, 0.1);
+            --text-muted-color: #9ca3af;
+        }
+
+        body.light-mode {
+            --bg-color: #f3f4f6;
+            --text-color: #1f2937;
+            --panel-bg-color: rgba(255, 255, 255, 0.7);
+            --panel-border-color: rgba(0, 0, 0, 0.1);
+            --text-muted-color: #4b5563;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* Mencegah scrollbar */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #info-panel, #controls-panel, #title-panel {
+            background-color: var(--panel-bg-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        h1, h2 {
+            color: var(--text-color);
+        }
+        p, span {
+             color: var(--text-muted-color);
+        }
+        strong {
+             color: var(--text-color);
+        }
+        .btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease, opacity 0.3s ease;
+            text-align: center;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: #2563eb;
+        }
+        .btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .btn-secondary {
+            background-color: #4b5563;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #374151;
+        }
+         .btn-danger {
+            background-color: #ef4444;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background-color: #dc2626;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .stability-stabil { color: #22c55e; }
+        .stability-tidak-stabil { color: #f97316; }
+        body.light-mode .stability-stabil { color: #16a34a; }
+        body.light-mode .stability-tidak-stabil { color: #ea580c; }
+
+        /* Gaya baru untuk panel yang bisa disembunyikan ke samping */
+        #info-panel {
+            transition: transform 0.5s ease-in-out;
+        }
+
+        #info-panel.collapsed-side {
+            transform: translateX(calc(100% + 2rem));
+        }
+        
+        /* Gaya baru untuk tombol ikon di sisi layar */
+        .icon-btn {
+            background-color: rgba(75, 85, 99, 0.3); /* abu-abu semi-transparan */
+            color: var(--text-color);
+            border: 1px solid var(--panel-border-color);
+            border-radius: 9999px; /* circular */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .icon-btn:hover {
+            background-color: rgba(107, 114, 128, 0.5);
+        }
+        body.light-mode .icon-btn {
+            background-color: rgba(229, 231, 235, 0.4);
+        }
+        body.light-mode .icon-btn:hover {
+            background-color: rgba(209, 213, 219, 0.6);
+        }
+
+        /* Gaya untuk Modal */
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-container {
+             background-color: var(--panel-bg-color);
+             border: 1px solid var(--panel-border-color);
+        }
+        
+        /* Kategori Warna Unsur */
+        .cat-alkali-metal { background-color: #ef4444; }
+        .cat-alkaline-earth-metal { background-color: #f97316; }
+        .cat-lanthanide { background-color: #a3e635; }
+        .cat-actinide { background-color: #4ade80; }
+        .cat-transition-metal { background-color: #22d3ee; }
+        .cat-post-transition-metal { background-color: #60a5fa; }
+        .cat-metalloid { background-color: #818cf8; }
+        .cat-nonmetal { background-color: #c084fc; }
+        .cat-halogen { background-color: #f472b6; }
+        .cat-noble-gas { background-color: #fb7185; }
+        
+        #footer-text {
+            color: var(--text-muted-color);
+            transition: color 0.3s ease;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="w-screen h-screen m-0 p-0 light-mode">
+
+    <!-- Canvas untuk render 3D -->
+    <canvas id="bg"></canvas>
+
+    <!-- Panel Judul -->
+    <div id="title-panel" class="absolute top-2 left-2 right-2 md:top-4 md:left-4 md:right-auto md:w-auto p-3 md:p-4 rounded-lg shadow-lg z-10">
+        <h1 class="text-xl md:text-2xl font-bold">Simulasi Atom</h1>
+        <p class="text-xs md:text-sm">Visualisasikan struktur atom secara interaktif.</p>
+    </div>
+    
+    <!-- Panel Kontrol Samping (Ikon) -->
+    <div id="side-controls-panel" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10">
+        <button id="periodic-table-btn" class="icon-btn" aria-label="Buka Tabel Periodik">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+        </button>
+        <button id="view-toggle-btn" class="icon-btn" aria-label="Toggle Tampilan 2D/3D">
+            <span id="view-toggle-text" class="font-bold text-sm select-none">2D</span>
+        </button>
+        <button id="theme-toggle-btn" class="icon-btn" aria-label="Toggle Tema Gelap/Terang">
+            <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
+        <button id="zoom-in-btn" class="icon-btn" aria-label="Zoom In">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3h-6" />
+            </svg>
+        </button>
+        <button id="zoom-out-btn" class="icon-btn" aria-label="Zoom Out">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Tombol untuk menampilkan kembali panel info -->
+    <button id="show-info-btn" class="icon-btn absolute top-44 sm:top-40 md:top-4 right-4 z-10 hidden" aria-label="Tampilkan Informasi">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </button>
+
+    <!-- Panel Informasi Atom -->
+    <div id="info-panel" class="absolute top-44 sm:top-40 md:top-4 right-2 md:right-4 p-3 md:p-4 rounded-lg shadow-lg w-auto md:w-72 z-10">
+        <div id="info-header" class="flex justify-between items-center cursor-pointer">
+            <h2 class="text-base md:text-lg font-bold">Informasi Atom</h2>
+            <svg id="info-arrow" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        </div>
+        <div id="info-content" class="mt-2 pt-2 border-t" style="border-color: var(--panel-border-color);">
+            <div class="space-y-1 text-sm">
+                <p><strong>Unsur:</strong> <span id="element-name">Hidrogen</span></p>
+                <p><strong>Nomor Atom (Z):</strong> <span id="atomic-number">1</span></p>
+                <p><strong>Nomor Massa (A):</strong> <span id="mass-number">1</span></p>
+                <p><strong>Muatan:</strong> <span id="charge">0</span></p>
+                <p><strong>Isotop:</strong> <span id="isotope-name">Hidrogen-1</span></p>
+                <p><strong>Stabilitas Inti:</strong> <span id="core-stability" class="font-bold">Stabil</span></p>
+                <div class="pt-2 border-t mt-2" style="border-color: var(--panel-border-color);">
+                    <p><strong>Wujud:</strong> <span id="element-phase">Gas</span></p>
+                    <p><strong>Kegunaan:</strong> <span id="element-usage">Bahan bakar bintang.</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Kontrol Utama -->
+    <div id="controls-panel" class="absolute bottom-8 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-8 md:w-auto p-2 md:p-4 rounded-none md:rounded-lg shadow-lg flex flex-col sm:flex-row gap-2 md:gap-4 items-center z-10">
+        <div class="grid grid-cols-3 gap-2">
+            <button id="add-proton" class="btn text-xs sm:text-sm">+ Proton</button>
+            <button id="add-neutron" class="btn btn-secondary text-xs sm:text-sm">+ Neutron</button>
+            <button id="add-electron" class="btn text-xs sm:text-sm">+ Elektron</button>
+            <button id="remove-proton" class="btn btn-danger text-xs sm:text-sm">- Proton</button>
+            <button id="remove-neutron" class="btn btn-danger text-xs sm:text-sm">- Neutron</button>
+            <button id="remove-electron" class="btn btn-danger text-xs sm:text-sm">- Elektron</button>
+        </div>
+        <div class="sm:border-l border-gray-600 sm:pl-4 flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
+             <button id="toggle-nucleus" class="btn btn-secondary w-full text-xs sm:text-sm">Pisahkan Inti</button>
+             <button id="reset-atom" class="btn btn-danger w-full text-xs sm:text-sm">Reset</button>
+        </div>
+    </div>
+    
+    <!-- Modal Tabel Periodik -->
+    <div id="periodic-table-modal" class="modal hidden fixed inset-0 z-20 flex justify-center items-center transition-opacity duration-300">
+        <div id="periodic-table-backdrop" class="absolute inset-0"></div>
+        <div id="periodic-table-container" class="modal-container p-4 rounded-lg shadow-lg relative max-w-7xl">
+             <h3 class="text-lg font-bold text-center mb-4">Pilih Unsur</h3>
+             <div id="periodic-table-grid" class="grid gap-1 text-center text-xs" style="grid-template-columns: repeat(18, minmax(0, 1fr));">
+                <!-- Grid akan diisi oleh JavaScript -->
+             </div>
+        </div>
+    </div>
+    
+    <!-- Modal Peringatan Kinerja -->
+    <div id="performance-warning-modal" class="modal hidden fixed inset-0 z-30 flex justify-center items-center">
+        <div class="modal-container p-6 rounded-lg shadow-lg text-center max-w-sm">
+            <h3 class="text-xl font-bold mb-2">Peringatan Kinerja</h3>
+            <p class="text-sm mb-4">Unsur yang Anda pilih sangat besar. Ini mungkin akan memperlambat kinerja perangkat Anda karena perlu merender banyak partikel 3D.</p>
+            <div class="flex gap-4 mt-6">
+                <button id="cancel-warning-btn" class="btn btn-secondary w-full">Batal</button>
+                <button id="continue-warning-btn" class="btn w-full">Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="absolute bottom-2 w-full text-center text-xs z-0">
+        <p id="footer-text" class="opacity-60">&copy; 2025 Akbar-Kurnia1. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // --- KONFIGURASI & KONSTANTA ---
+        const PARTICLE_RADIUS = 0.5;
+        const NUCLEUS_SEPARATION_FACTOR = 2.0;
+        const MAX_PROTONS = 118;
+        const MAX_NEUTRONS = 180;
+        const MAX_ELECTRONS = 118;
+        const PERFORMANCE_THRESHOLD = 37;
+
+        // --- VARIABEL GLOBAL & STATE ---
+        let scene, camera, renderer, controls;
+        const nucleus = new THREE.Group();
+        const electrons = new THREE.Group();
+        const orbits = new THREE.Group();
+
+        let protons = [], neutrons = [], electronObjects = [];
+        let countdownInterval = null;
+        
+        // State utama aplikasi
+        const appState = {
+            protons: 1,
+            neutrons: 0,
+            electrons: 1,
+            isNucleusSeparated: false,
+            is3DView: true,
+        };
+
+        // Kumpulan referensi elemen DOM untuk efisiensi
+        const domElements = {};
+
+        // Data lengkap untuk 118 unsur
+        const ELEMENT_DATA = [
+            null,
+            {name:"Hidrogen",symbol:"H",commonNeutrons:0,stableNeutrons:[0,1],phase:"Gas",usage:"Bahan bakar bintang.",type:"nonmetal"},
+            {name:"Helium",symbol:"He",commonNeutrons:2,stableNeutrons:[1,2],phase:"Gas",usage:"Mengisi balon udara.",type:"noble-gas"},
+            {name:"Litium",symbol:"Li",commonNeutrons:4,stableNeutrons:[3,4],phase:"Padat",usage:"Baterai isi ulang.",type:"alkali-metal"},
+            {name:"Berilium",symbol:"Be",commonNeutrons:5,stableNeutrons:[5],phase:"Padat",usage:"Komponen teleskop.",type:"alkaline-earth-metal"},
+            {name:"Boron",symbol:"B",commonNeutrons:6,stableNeutrons:[5,6],phase:"Padat",usage:"Kaca tahan panas.",type:"metalloid"},
+            {name:"Karbon",symbol:"C",commonNeutrons:6,stableNeutrons:[6,7],phase:"Padat",usage:"Dasar kehidupan.",type:"nonmetal"},
+            {name:"Nitrogen",symbol:"N",commonNeutrons:7,stableNeutrons:[7,8],phase:"Gas",usage:"Pupuk, atmosfer.",type:"nonmetal"},
+            {name:"Oksigen",symbol:"O",commonNeutrons:8,stableNeutrons:[8,9,10],phase:"Gas",usage:"Pernapasan.",type:"nonmetal"},
+            {name:"Fluorin",symbol:"F",commonNeutrons:10,stableNeutrons:[10],phase:"Gas",usage:"Pasta gigi.",type:"halogen"},
+            {name:"Neon",symbol:"Ne",commonNeutrons:10,stableNeutrons:[10,11,12],phase:"Gas",usage:"Lampu iklan.",type:"noble-gas"},
+            {name:"Natrium",symbol:"Na",commonNeutrons:12,stableNeutrons:[12],phase:"Padat",usage:"Garam dapur.",type:"alkali-metal"},
+            {name:"Magnesium",symbol:"Mg",commonNeutrons:12,stableNeutrons:[12,13,14],phase:"Padat",usage:"Kembang api.",type:"alkaline-earth-metal"},
+            {name:"Aluminium",symbol:"Al",commonNeutrons:14,stableNeutrons:[14],phase:"Padat",usage:"Kaleng minuman.",type:"post-transition-metal"},
+            {name:"Silikon",symbol:"Si",commonNeutrons:14,stableNeutrons:[14,15,16],phase:"Padat",usage:"Chip komputer.",type:"metalloid"},
+            {name:"Fosfor",symbol:"P",commonNeutrons:16,stableNeutrons:[16],phase:"Padat",usage:"Ujung korek api.",type:"nonmetal"},
+            {name:"Belerang",symbol:"S",commonNeutrons:16,stableNeutrons:[16,17,18,20],phase:"Padat",usage:"Asam sulfat.",type:"nonmetal"},
+            {name:"Klorin",symbol:"Cl",commonNeutrons:18,stableNeutrons:[18,20],phase:"Gas",usage:"Disinfektan air.",type:"halogen"},
+            {name:"Argon",symbol:"Ar",commonNeutrons:22,stableNeutrons:[18,20,22],phase:"Gas",usage:"Pengisi bola lampu.",type:"noble-gas"},
+            {name:"Kalium",symbol:"K",commonNeutrons:20,stableNeutrons:[20,22],phase:"Padat",usage:"Fungsi saraf.",type:"alkali-metal"},
+            {name:"Kalsium",symbol:"Ca",commonNeutrons:20,stableNeutrons:[20,22,24,26,28],phase:"Padat",usage:"Tulang dan gigi.",type:"alkaline-earth-metal"},
+            {name:"Skandium",symbol:"Sc",commonNeutrons:24,stableNeutrons:[24],phase:"Padat",usage:"Paduan logam ringan.",type:"transition-metal"},
+            {name:"Titanium",symbol:"Ti",commonNeutrons:26,stableNeutrons:[24,25,26,27,28],phase:"Padat",usage:"Implan medis, pesawat.",type:"transition-metal"},
+            {name:"Vanadium",symbol:"V",commonNeutrons:28,stableNeutrons:[28],phase:"Padat",usage:"Baja tahan karat.",type:"transition-metal"},
+            {name:"Kromium",symbol:"Cr",commonNeutrons:28,stableNeutrons:[26,28,29,30],phase:"Padat",usage:"Pelapisan logam.",type:"transition-metal"},
+            {name:"Mangan",symbol:"Mn",commonNeutrons:30,stableNeutrons:[30],phase:"Padat",usage:"Produksi baja.",type:"transition-metal"},
+            {name:"Besi",symbol:"Fe",commonNeutrons:30,stableNeutrons:[28,30,31,32],phase:"Padat",usage:"Bahan bangunan utama.",type:"transition-metal"},
+            {name:"Kobalt",symbol:"Co",commonNeutrons:32,stableNeutrons:[32],phase:"Padat",usage:"Magnet, baterai.",type:"transition-metal"},
+            {name:"Nikel",symbol:"Ni",commonNeutrons:31,stableNeutrons:[30,32,33,34,36],phase:"Padat",usage:"Koin, baterai.",type:"transition-metal"},
+            {name:"Tembaga",symbol:"Cu",commonNeutrons:35,stableNeutrons:[34,36],phase:"Padat",usage:"Kabel listrik.",type:"transition-metal"},
+            {name:"Seng",symbol:"Zn",commonNeutrons:35,stableNeutrons:[34,36,37,38,40],phase:"Padat",usage:"Pelapis anti karat.",type:"transition-metal"},
+            {name:"Galium",symbol:"Ga",commonNeutrons:39,stableNeutrons:[38,40],phase:"Padat",usage:"Semikonduktor, LED.",type:"post-transition-metal"},
+            {name:"Germanium",symbol:"Ge",commonNeutrons:41,stableNeutrons:[40,42,43,44],phase:"Padat",usage:"Serat optik.",type:"metalloid"},
+            {name:"Arsen",symbol:"As",commonNeutrons:42,stableNeutrons:[42],phase:"Padat",usage:"Racun, semikonduktor.",type:"metalloid"},
+            {name:"Selenium",symbol:"Se",commonNeutrons:45,stableNeutrons:[42,44,45,46,48],phase:"Padat",usage:"Fotosel, sampo.",type:"nonmetal"},
+            {name:"Bromin",symbol:"Br",commonNeutrons:45,stableNeutrons:[44,46],phase:"Cair",usage:"Anti api.",type:"halogen"},
+            {name:"Kripton",symbol:"Kr",commonNeutrons:48,stableNeutrons:[42,44,46,47,48,50],phase:"Gas",usage:"Lampu kilat fotografi.",type:"noble-gas"},
+            {name:"Rubidium",symbol:"Rb",commonNeutrons:48,stableNeutrons:[48],phase:"Padat",usage:"Jam atom.",type:"alkali-metal"},
+            {name:"Stronsium",symbol:"Sr",commonNeutrons:50,stableNeutrons:[46,48,49,50],phase:"Padat",usage:"Kembang api merah.",type:"alkaline-earth-metal"},
+            {name:"Itrium",symbol:"Y",commonNeutrons:50,stableNeutrons:[50],phase:"Padat",usage:"Layar TV tabung (dulu).",type:"transition-metal"},
+            {name:"Zirkonium",symbol:"Zr",commonNeutrons:51,stableNeutrons:[50,51,52,54,56],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal"},
+            {name:"Niobium",symbol:"Nb",commonNeutrons:52,stableNeutrons:[52],phase:"Padat",usage:"Superkonduktor.",type:"transition-metal"},
+            {name:"Molibdenum",symbol:"Mo",commonNeutrons:54,stableNeutrons:[50,52,53,54,55,56,58],phase:"Padat",usage:"Paduan baja.",type:"transition-metal"},
+            {name:"Teknesium",symbol:"Tc",commonNeutrons:55,phase:"Padat",usage:"Diagnostik medis.",type:"transition-metal"},
+            {name:"Rutenium",symbol:"Ru",commonNeutrons:58,stableNeutrons:[52,54,55,56,57,58,60],phase:"Padat",usage:"Kontak listrik.",type:"transition-metal"},
+            {name:"Rodium",symbol:"Rh",commonNeutrons:58,stableNeutrons:[58],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal"},
+            {name:"Paladium",symbol:"Pd",commonNeutrons:60,stableNeutrons:[58,60,62,63,64,66],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal"},
+            {name:"Perak",symbol:"Ag",commonNeutrons:61,stableNeutrons:[60,62],phase:"Padat",usage:"Perhiasan, konduktor.",type:"transition-metal"},
+            {name:"Kadmium",symbol:"Cd",commonNeutrons:66,stableNeutrons:[60,62,64,65,66,68],phase:"Padat",usage:"Baterai Ni-Cd.",type:"transition-metal"},
+            {name:"Indium",symbol:"In",commonNeutrons:66,stableNeutrons:[64,66],phase:"Padat",usage:"Layar sentuh (ITO).",type:"post-transition-metal"},
+            {name:"Timah",symbol:"Sn",commonNeutrons:70,stableNeutrons:[62,64,65,66,67,68,69,70,72,74],phase:"Padat",usage:"Solder, pelapis.",type:"post-transition-metal"},
+            {name:"Antimon",symbol:"Sb",commonNeutrons:71,stableNeutrons:[70,72],phase:"Padat",usage:"Baterai timbal.",type:"metalloid"},
+            {name:"Telurium",symbol:"Te",commonNeutrons:76,stableNeutrons:[70,72,73,74,75,76,78],phase:"Padat",usage:"Paduan logam.",type:"metalloid"},
+            {name:"Yodium",symbol:"I",commonNeutrons:74,stableNeutrons:[74],phase:"Padat",usage:"Antiseptik.",type:"halogen"},
+            {name:"Xenon",symbol:"Xe",commonNeutrons:77,stableNeutrons:[70,72,74,75,76,77,78,80,82],phase:"Gas",usage:"Lampu mobil HID.",type:"noble-gas"},
+            {name:"Sesium",symbol:"Cs",commonNeutrons:78,stableNeutrons:[78],phase:"Padat",usage:"Jam atom.",type:"alkali-metal"},
+            {name:"Barium",symbol:"Ba",commonNeutrons:81,stableNeutrons:[74,76,78,79,80,81,82],phase:"Padat",usage:"Pencitraan sinar-X.",type:"alkaline-earth-metal"},
+            {name:"Lantanum",symbol:"La",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Lensa kamera.",type:"lanthanide"},
+            {name:"Serium",symbol:"Ce",commonNeutrons:82,stableNeutrons:[78,80,82,84],phase:"Padat",usage:"Batu geretan.",type:"lanthanide"},
+            {name:"Praseodimium",symbol:"Pr",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Kacamata las.",type:"lanthanide"},
+            {name:"Neodimium",symbol:"Nd",commonNeutrons:84,stableNeutrons:[82,83,84,85,86,88,90],phase:"Padat",usage:"Magnet super kuat.",type:"lanthanide"},
+            {name:"Prometium",symbol:"Pm",commonNeutrons:84,phase:"Padat",usage:"Cat berpendar.",type:"lanthanide"},
+            {name:"Samarium",symbol:"Sm",commonNeutrons:88,stableNeutrons:[82,86,87,88,90,92,94],phase:"Padat",usage:"Magnet suhu tinggi.",type:"lanthanide"},
+            {name:"Europium",symbol:"Eu",commonNeutrons:89,stableNeutrons:[88,90],phase:"Padat",usage:"Layar TV (merah).",type:"lanthanide"},
+            {name:"Gadolinium",symbol:"Gd",commonNeutrons:94,stableNeutrons:[90,92,93,94,96,98],phase:"Padat",usage:"Agen kontras MRI.",type:"lanthanide"},
+            {name:"Terbium",symbol:"Tb",commonNeutrons:96,stableNeutrons:[94],phase:"Padat",usage:"Layar (hijau).",type:"lanthanide"},
+            {name:"Disprosium",symbol:"Dy",commonNeutrons:99,stableNeutrons:[94,96,97,98,99,100,102],phase:"Padat",usage:"Magnet motor hibrida.",type:"lanthanide"},
+            {name:"Holmium",symbol:"Ho",commonNeutrons:98,stableNeutrons:[98],phase:"Padat",usage:"Laser bedah.",type:"lanthanide"},
+            {name:"Erbium",symbol:"Er",commonNeutrons:100,stableNeutrons:[96,98,99,100,102,104],phase:"Padat",usage:"Serat optik.",type:"lanthanide"},
+            {name:"Tulium",symbol:"Tm",commonNeutrons:100,stableNeutrons:[100],phase:"Padat",usage:"Mesin X-ray portabel.",type:"lanthanide"},
+            {name:"Iterbium",symbol:"Yb",commonNeutrons:103,stableNeutrons:[100,102,103,104,106,108],phase:"Padat",usage:"Laser inframerah.",type:"lanthanide"},
+            {name:"Lutetium",symbol:"Lu",commonNeutrons:106,stableNeutrons:[106],phase:"Padat",usage:"Detektor PET scan.",type:"lanthanide"},
+            {name:"Hafnium",symbol:"Hf",commonNeutrons:106,stableNeutrons:[102,104,105,106,107,108],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal"},
+            {name:"Tantalum",symbol:"Ta",commonNeutrons:108,stableNeutrons:[108],phase:"Padat",usage:"Kapasitor ponsel.",type:"transition-metal"},
+            {name:"Tungsten",symbol:"W",commonNeutrons:110,stableNeutrons:[108,110,111,112,114],phase:"Padat",usage:"Filamen bola lampu.",type:"transition-metal"},
+            {name:"Renium",symbol:"Re",commonNeutrons:111,stableNeutrons:[110,112],phase:"Padat",usage:"Mesin jet.",type:"transition-metal"},
+            {name:"Osmium",symbol:"Os",commonNeutrons:114,stableNeutrons:[110,112,113,114,116,118],phase:"Padat",usage:"Ujung pulpen.",type:"transition-metal"},
+            {name:"Iridium",symbol:"Ir",commonNeutrons:115,stableNeutrons:[114,116],phase:"Padat",usage:"Busi.",type:"transition-metal"},
+            {name:"Platina",symbol:"Pt",commonNeutrons:117,stableNeutrons:[114,115,116,117,118,120],phase:"Padat",usage:"Perhiasan, katalis.",type:"transition-metal"},
+            {name:"Emas",symbol:"Au",commonNeutrons:118,stableNeutrons:[118],phase:"Padat",usage:"Perhiasan, elektronik.",type:"transition-metal"},
+            {name:"Raksa",symbol:"Hg",commonNeutrons:122,stableNeutrons:[118,120,121,122,124,126],phase:"Cair",usage:"Termometer (dulu).",type:"transition-metal"},
+            {name:"Talium",symbol:"Tl",commonNeutrons:123,stableNeutrons:[122,124],phase:"Padat",usage:"Detektor inframerah.",type:"post-transition-metal"},
+            {name:"Timbal",symbol:"Pb",commonNeutrons:126,stableNeutrons:[124,125,126,127,128],phase:"Padat",usage:"Baterai mobil (aki).",type:"post-transition-metal"},
+            {name:"Bismut",symbol:"Bi",commonNeutrons:126,stableNeutrons:[126],phase:"Padat",usage:"Obat sakit perut.",type:"post-transition-metal"},
+            // Unsur setelah Bismut tidak memiliki isotop stabil
+            {name:"Polonium",symbol:"Po",commonNeutrons:125,phase:"Padat",usage:"Pemanas satelit.",type:"post-transition-metal"},
+            {name:"Astatin",symbol:"At",commonNeutrons:125,phase:"Padat",usage:"Terapi kanker.",type:"halogen"},
+            {name:"Radon",symbol:"Rn",commonNeutrons:136,phase:"Gas",usage:"Terapi radiasi.",type:"noble-gas"},
+            {name:"Fransium",symbol:"Fr",commonNeutrons:136,phase:"Padat",usage:"Penelitian ilmiah.",type:"alkali-metal"},
+            {name:"Radium",symbol:"Ra",commonNeutrons:138,phase:"Padat",usage:"Cat jam berpendar (dulu).",type:"alkaline-earth-metal"},
+            {name:"Aktinium",symbol:"Ac",commonNeutrons:138,phase:"Padat",usage:"Sumber neutron.",type:"actinide"},
+            {name:"Torium",symbol:"Th",commonNeutrons:142,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide"},
+            {name:"Protaktinium",symbol:"Pa",commonNeutrons:140,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Uranium",symbol:"U",commonNeutrons:146,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide"},
+            {name:"Neptunium",symbol:"Np",commonNeutrons:146,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Plutonium",symbol:"Pu",commonNeutrons:150,phase:"Padat",usage:"Senjata nuklir, sumber daya.",type:"actinide"},
+            {name:"Amerisium",symbol:"Am",commonNeutrons:152,phase:"Padat",usage:"Detektor asap.",type:"actinide"},
+            {name:"Kurium",symbol:"Cm",commonNeutrons:153,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Berkelium",symbol:"Bk",commonNeutrons:152,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Kalifornium",symbol:"Cf",commonNeutrons:153,phase:"Padat",usage:"Memulai reaktor nuklir.",type:"actinide"},
+            {name:"Einsteinium",symbol:"Es",commonNeutrons:155,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Fermium",symbol:"Fm",commonNeutrons:158,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Mendelevium",symbol:"Md",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Nobelium",symbol:"No",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Lawrensium",symbol:"Lr",commonNeutrons:161,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
+            {name:"Rutherfordium",symbol:"Rf",commonNeutrons:163,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Dubnium",symbol:"Db",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Seaborgium",symbol:"Sg",commonNeutrons:167,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Bohrium",symbol:"Bh",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Hassium",symbol:"Hs",commonNeutrons:169,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Meitnerium",symbol:"Mt",commonNeutrons:170,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Darmstadtium",symbol:"Ds",commonNeutrons:172,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Roentgenium",symbol:"Rg",commonNeutrons:171,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Kopernisium",symbol:"Cn",commonNeutrons:173,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"transition-metal"},
+            {name:"Nihonium",symbol:"Nh",commonNeutrons:173,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
+            {name:"Flerovium",symbol:"Fl",commonNeutrons:175,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
+            {name:"Moskovium",symbol:"Mc",commonNeutrons:174,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
+            {name:"Livermorium",symbol:"Lv",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
+            {name:"Tenesin",symbol:"Ts",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"halogen"},
+            {name:"Oganesson",symbol:"Og",commonNeutrons:176,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"noble-gas"}
+        ];
+
+        // --- FUNGSI UTAMA ---
+        function init() {
+            // Mengisi objek referensi DOM
+            cacheDOMElements();
+            
+            // Setup Scene, Camera, Renderer
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 20;
+            renderer = new THREE.WebGLRenderer({ canvas: domElements.canvas, antialias: true, alpha: true });
+            renderer.setClearColor(0x000000, 0);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            scene.add(nucleus, electrons, orbits);
+
+            // Setup Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 10, 15);
+            scene.add(ambientLight, pointLight);
+
+            // Setup Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            
+            // Setup Event Listeners
+            setupEventListeners();
+            populatePeriodicTable();
+            buildAtomFromState(); // Membangun atom awal berdasarkan state
+            updateThemeUI(true); // Set tema awal
+
+            // Mulai loop animasi
+            animate();
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            // Animasikan pergerakan elektron
+            electronObjects.forEach(e => {
+                e.angle += e.speed;
+                const x = e.orbitRadius * Math.cos(e.angle);
+                const y = e.orbitRadius * Math.sin(e.angle);
+                const pos = new THREE.Vector3(x, y, 0).applyEuler(e.orbit.rotation);
+                e.mesh.position.copy(pos);
+            });
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- FUNGSI PEMBENTUKAN ATOM ---
+        function buildAtomFromState() {
+            clearAtom(); 
+            const p = appState.protons;
+            const n = appState.neutrons;
+            const e = appState.electrons;
+
+            for (let i = 0; i < p; i++) {
+                const proton = createParticle('proton');
+                protons.push(proton);
+                nucleus.add(proton);
+            }
+            for (let i = 0; i < n; i++) {
+                const neutron = createParticle('neutron');
+                neutrons.push(neutron);
+                nucleus.add(neutron);
+            }
+            for (let i = 0; i < e; i++) {
+                const electronData = createElectron(i);
+                electronObjects.push(electronData);
+                electrons.add(electronData.mesh);
+                orbits.add(electronData.orbit);
+            }
+            arrangeNucleons();
+            updateInfoPanel();
+        }
+
+        function clearAtom() {
+            [...protons, ...neutrons].forEach(p => nucleus.remove(p));
+            electronObjects.forEach(e => {
+                electrons.remove(e.mesh);
+                orbits.remove(e.orbit);
+            });
+            protons = [];
+            neutrons = [];
+            electronObjects = [];
+        }
+
+        function createParticle(type) {
+            const geometry = new THREE.SphereGeometry(PARTICLE_RADIUS, 32, 32);
+            const color = type === 'proton' ? 0xff0000 : 0x808080;
+            const material = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function createElectron(index) {
+            const geometry = new THREE.SphereGeometry(PARTICLE_RADIUS / 3, 16, 16);
+            const material = new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.5 });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            let shellIndex;
+            if (index < 2) shellIndex = 0;      // K
+            else if (index < 10) shellIndex = 1; // L
+            else if (index < 28) shellIndex = 2; // M
+            else if (index < 60) shellIndex = 3; // N
+            else if (index < 92) shellIndex = 4; // O
+            else if (index < 110) shellIndex = 5; // P
+            else shellIndex = 6;                 // Q
+            
+            const orbitRadius = 5 + shellIndex * 2.5;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.01 / (shellIndex + 1);
+            const orbitGeometry = new THREE.TorusGeometry(orbitRadius, 0.05, 16, 100);
+            const isLightMode = document.body.classList.contains('light-mode');
+            const orbitColor = isLightMode ? 0xAAAAAA : 0x444444;
+            const orbitMaterial = new THREE.LineBasicMaterial({ color: orbitColor });
+            const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+            
+            if (appState.is3DView) {
+                orbit.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI); 
+            } else {
+                orbit.rotation.set(Math.PI / 2, 0, 0);
+            }
+            return { mesh, orbit, orbitRadius, angle, speed };
+        }
+
+        function arrangeNucleons() {
+            const nucleons = [...protons, ...neutrons];
+            if (nucleons.length === 0) return;
+            const radius = appState.isNucleusSeparated ? NUCLEUS_SEPARATION_FACTOR : Math.cbrt(nucleons.length) * PARTICLE_RADIUS * 0.7;
+            nucleons.forEach((nucleon, i) => {
+                const phi = Math.acos(-1 + (2 * i) / nucleons.length);
+                const theta = Math.sqrt(nucleons.length * Math.PI) * phi;
+                nucleon.position.set(
+                    radius * Math.cos(theta) * Math.sin(phi),
+                    radius * Math.sin(theta) * Math.sin(phi),
+                    radius * Math.cos(phi)
+                );
+            });
+        }
+
+        // --- FUNGSI KONTROL & INTERAKSI (REFACTORED) ---
+        function updateParticleCount(type, delta) {
+            const state = appState;
+            let currentVal = state[type];
+            let newVal = currentVal + delta;
+            
+            if (type === 'protons' && (newVal < 1 || newVal > MAX_PROTONS)) return;
+            if (type === 'neutrons' && (newVal < 0 || newVal > MAX_NEUTRONS)) return;
+            if (type === 'electrons' && (newVal < 0 || newVal > MAX_ELECTRONS)) return;
+            
+            state[type] = newVal;
+            
+            // Menjaga netralitas saat proton diubah
+            if(type === 'protons') {
+                state.electrons = Math.min(MAX_ELECTRONS, Math.max(0, state.electrons + delta));
+            }
+            
+            buildAtomFromState();
+        }
+
+        function resetAtom() {
+            appState.protons = 1;
+            appState.neutrons = 0;
+            appState.electrons = 1;
+            appState.isNucleusSeparated = false;
+            appState.is3DView = true;
+            domElements.toggleNucleus.textContent = 'Pisahkan Inti';
+            domElements.viewToggleText.textContent = '2D';
+            buildAtomFromState();
+        }
+
+        function toggleNucleusSeparation() {
+            appState.isNucleusSeparated = !appState.isNucleusSeparated;
+            domElements.toggleNucleus.textContent = appState.isNucleusSeparated ? 'Satukan Inti' : 'Pisahkan Inti';
+            arrangeNucleons();
+        }
+
+        function toggleViewMode() {
+            appState.is3DView = !appState.is3DView;
+            domElements.viewToggleText.textContent = appState.is3DView ? '2D' : '3D';
+            buildAtomFromState();
+        }
+
+        function zoom(factor) { camera.position.multiplyScalar(factor); }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            updateThemeUI();
+        }
+
+        function updateThemeUI(isInitial = false) {
+             const isLightMode = document.body.classList.contains('light-mode');
+             if(!isInitial) { // Hanya update orbit jika bukan pemanggilan awal
+                const orbitColor = isLightMode ? 0xAAAAAA : 0x444444;
+                orbits.children.forEach(orbit => orbit.material.color.setHex(orbitColor));
+             }
+            domElements.sunIcon.classList.toggle('hidden', !isLightMode);
+            domElements.moonIcon.classList.toggle('hidden', isLightMode);
+        }
+
+
+        function toggleInfoPanel() { 
+            const isCollapsed = domElements.infoPanel.classList.toggle('collapsed-side');
+            domElements.showInfoBtn.classList.toggle('hidden', !isCollapsed);
+        }
+        
+        function togglePeriodicTable() { domElements.periodicTableModal.classList.toggle('hidden'); }
+
+        function showPerformanceWarning(atomicNumber, neutronCount) {
+            togglePeriodicTable();
+            const continueBtn = domElements.continueWarningBtn;
+            
+            continueBtn.dataset.atomicNumber = atomicNumber;
+            continueBtn.dataset.neutronCount = neutronCount;
+
+            continueBtn.disabled = true;
+            continueBtn.innerHTML = `Lanjutkan (<span id="countdown-timer">10</span>)`;
+            
+            domElements.performanceWarningModal.classList.remove('hidden');
+            
+            let countdown = 10;
+            const timerSpan = document.getElementById('countdown-timer');
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            countdownInterval = setInterval(() => {
+                countdown--;
+                timerSpan.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    continueBtn.disabled = false;
+                    continueBtn.textContent = 'Lanjutkan';
+                }
+            }, 1000);
+        }
+
+        function cancelWarning() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            domElements.performanceWarningModal.classList.add('hidden');
+        }
+
+        function continueWarning() {
+            const continueBtn = domElements.continueWarningBtn;
+            const atomicNumber = parseInt(continueBtn.dataset.atomicNumber);
+            const neutronCount = parseInt(continueBtn.dataset.neutronCount);
+
+            if (!isNaN(atomicNumber) && !isNaN(neutronCount)) {
+                appState.protons = atomicNumber;
+                appState.neutrons = neutronCount;
+                appState.electrons = atomicNumber;
+                buildAtomFromState();
+            }
+            cancelWarning(); // Tutup modal setelah melanjutkan
+        }
+
+        // --- FUNGSI PEMBANTU & UI ---
+        function populatePeriodicTable() {
+            const grid = domElements.periodicTableGrid;
+            const layout = [
+                1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  2, // Periode 1
+                3,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  5,  6,  7,  8,  9, 10, // Periode 2
+                11, 12, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 13, 14, 15, 16, 17, 18, // Periode 3
+                19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, // Periode 4
+                37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, // Periode 5
+                55, 56, 57, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, // Periode 6
+                87, 88, 89, 104,105,106,107,108,109,110,111,112,113,114,115,116,117,118, // Periode 7
+                0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // Spacer
+                0,  0,  0, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,  0, // Lantanida
+                0,  0,  0, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,101,102,103, 0  // Aktinida
+            ];
+            
+            grid.innerHTML = '';
+            layout.forEach(num => {
+                const cell = document.createElement('div');
+                if (num > 0 && ELEMENT_DATA[num]) {
+                    const data = ELEMENT_DATA[num];
+                    cell.className = `element-cell p-1 rounded-md cat-${data.type}`;
+                    cell.dataset.atomicNumber = num;
+                    cell.title = data.name;
+                    cell.innerHTML = `<div class="font-bold text-sm">${data.symbol}</div><div class="text-xs">${num}</div>`;
+                    cell.addEventListener('click', () => {
+                        if (num >= PERFORMANCE_THRESHOLD) {
+                            showPerformanceWarning(num, data.commonNeutrons);
+                        } else {
+                            appState.protons = num;
+                            appState.neutrons = data.commonNeutrons;
+                            appState.electrons = num;
+                            buildAtomFromState();
+                            togglePeriodicTable();
+                        }
+                    });
+                } else if (num === 57 || num === 89) {
+                    const type = num === 57 ? 'lanthanide' : 'actinide';
+                    cell.className = `p-1 rounded-md cat-${type} flex items-center justify-center`;
+                    cell.innerHTML = `<div class="text-xs">${num === 57 ? '57-71' : '89-103'}</div>`;
+                }
+                grid.appendChild(cell);
+            });
+        }
+        
+        function updateInfoPanel() {
+            const numProtons = appState.protons;
+            if(numProtons === 0) return;
+            const numNeutrons = appState.neutrons;
+            const massNumber = numProtons + numNeutrons;
+            const data = ELEMENT_DATA[numProtons] || { name: `Unsur #${numProtons}`, phase: '-', usage: '-' };
+            const charge = numProtons - appState.electrons;
+
+            domElements.elementName.textContent = data.name;
+            domElements.atomicNumber.textContent = numProtons;
+            domElements.massNumber.textContent = massNumber;
+            domElements.isotopeName.textContent = `${data.name}-${massNumber}`;
+            domElements.elementPhase.textContent = data.phase;
+            domElements.elementUsage.textContent = data.usage;
+            domElements.charge.textContent = charge > 0 ? `+${charge}` : charge;
+            
+            const stabilitySpan = domElements.coreStability;
+            if (numProtons > 83) {
+                 stabilitySpan.textContent = 'Radioaktif';
+                 stabilitySpan.className = 'font-bold stability-tidak-stabil';
+            } else {
+                 const stable = ELEMENT_DATA[numProtons].stableNeutrons ? ELEMENT_DATA[numProtons].stableNeutrons.includes(numNeutrons) : false;
+                 stabilitySpan.textContent = stable ? 'Stabil' : 'Tidak Stabil';
+                 stabilitySpan.className = `font-bold ${stable ? 'stability-stabil' : 'stability-tidak-stabil'}`;
+            }
+        }
+
+        // Fungsi untuk mengambil semua referensi elemen DOM sekali saja
+        function cacheDOMElements() {
+            domElements.canvas = document.querySelector('#bg');
+            domElements.infoPanel = document.getElementById('info-panel');
+            domElements.showInfoBtn = document.getElementById('show-info-btn');
+            domElements.viewToggleText = document.getElementById('view-toggle-text');
+            domElements.sunIcon = document.getElementById('sun-icon');
+            domElements.moonIcon = document.getElementById('moon-icon');
+            domElements.toggleNucleus = document.getElementById('toggle-nucleus');
+            domElements.periodicTableModal = document.getElementById('periodic-table-modal');
+            domElements.performanceWarningModal = document.getElementById('performance-warning-modal');
+            domElements.continueWarningBtn = document.getElementById('continue-warning-btn');
+            domElements.periodicTableGrid = document.getElementById('periodic-table-grid');
+            domElements.elementName = document.getElementById('element-name');
+            domElements.atomicNumber = document.getElementById('atomic-number');
+            domElements.massNumber = document.getElementById('mass-number');
+            domElements.charge = document.getElementById('charge');
+            domElements.isotopeName = document.getElementById('isotope-name');
+            domElements.coreStability = document.getElementById('core-stability');
+            domElements.elementPhase = document.getElementById('element-phase');
+            domElements.elementUsage = document.getElementById('element-usage');
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            // Main controls
+            document.getElementById('add-proton').addEventListener('click', () => updateParticleCount('protons', 1));
+            document.getElementById('add-neutron').addEventListener('click', () => updateParticleCount('neutrons', 1));
+            document.getElementById('add-electron').addEventListener('click', () => updateParticleCount('electrons', 1));
+            document.getElementById('remove-proton').addEventListener('click', () => updateParticleCount('protons', -1));
+            document.getElementById('remove-neutron').addEventListener('click', () => updateParticleCount('neutrons', -1));
+            document.getElementById('remove-electron').addEventListener('click', () => updateParticleCount('electrons', -1));
+            document.getElementById('toggle-nucleus').addEventListener('click', toggleNucleusSeparation);
+            document.getElementById('reset-atom').addEventListener('click', resetAtom);
+            // Side controls
+            document.getElementById('periodic-table-btn').addEventListener('click', togglePeriodicTable);
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+            document.getElementById('view-toggle-btn').addEventListener('click', toggleViewMode);
+            document.getElementById('zoom-in-btn').addEventListener('click', () => zoom(0.8));
+            document.getElementById('zoom-out-btn').addEventListener('click', () => zoom(1.2));
+            // Panels and Modals
+            document.getElementById('info-header').addEventListener('click', toggleInfoPanel);
+            domElements.showInfoBtn.addEventListener('click', toggleInfoPanel); // Menggunakan referensi cache
+            document.getElementById('periodic-table-backdrop').addEventListener('click', togglePeriodicTable);
+            document.getElementById('cancel-warning-btn').addEventListener('click', cancelWarning);
+            document.getElementById('continue-warning-btn').addEventListener('click', continueWarning);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
