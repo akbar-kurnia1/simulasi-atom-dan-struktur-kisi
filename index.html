@@ -37,14 +37,14 @@
             color: var(--text-color);
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-        #info-panel, #controls-panel, #title-panel {
+        #info-panel, #controls-panel, #title-panel, #expansion-slider-container {
             background-color: var(--panel-bg-color);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--panel-border-color);
             transition: background-color 0.3s ease, border-color 0.3s ease;
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: var(--text-color);
         }
         p, span {
@@ -125,6 +125,14 @@
         body.light-mode .icon-btn:hover {
             background-color: rgba(209, 213, 219, 0.6);
         }
+        
+        /* Gaya untuk tombol ikon yang aktif */
+        .icon-btn.active {
+            background-color: rgba(99, 102, 241, 0.6); /* Indigo, semi-transparan */
+        }
+        body.light-mode .icon-btn.active {
+            background-color: rgba(99, 102, 241, 0.4); 
+        }
 
         /* Gaya untuk Modal */
         .modal {
@@ -153,6 +161,35 @@
             color: var(--text-muted-color);
             transition: color 0.3s ease;
         }
+
+        /* Gaya untuk slider ekspansi */
+        #expansion-slider-container {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: rgba(107, 114, 128, 0.5);
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #e5e7eb;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        body.light-mode input[type="range"] {
+             background: rgba(156, 163, 175, 0.5);
+        }
+        body.light-mode input[type="range"]::-webkit-slider-thumb {
+            background: #374151;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,6 +211,16 @@
         <button id="periodic-table-btn" class="icon-btn" aria-label="Buka Tabel Periodik">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+        </button>
+        <button id="structure-toggle-btn" class="icon-btn" aria-label="Toggle Struktur Inti Kubik">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+        </button>
+         <button id="expansion-toggle-btn" class="icon-btn" aria-label="Toggle Ekspansi Inti">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" />
             </svg>
         </button>
         <button id="view-toggle-btn" class="icon-btn" aria-label="Toggle Tampilan 2D/3D">
@@ -226,6 +273,10 @@
                     <p><strong>Wujud:</strong> <span id="element-phase">Gas</span></p>
                     <p><strong>Kegunaan:</strong> <span id="element-usage">Bahan bakar bintang.</span></p>
                 </div>
+                 <div class="pt-2 border-t mt-2" style="border-color: var(--panel-border-color);">
+                    <h3 class="font-bold text-sm mb-1" style="color: var(--text-color);">Konfigurasi Elektron</h3>
+                    <p id="electron-config-string" class="text-xs break-words"></p>
+                </div>
             </div>
         </div>
     </div>
@@ -244,6 +295,12 @@
              <button id="toggle-nucleus" class="btn btn-secondary w-full text-xs sm:text-sm">Pisahkan Inti</button>
              <button id="reset-atom" class="btn btn-danger w-full text-xs sm:text-sm">Reset</button>
         </div>
+    </div>
+
+     <!-- Kontrol Slider Ekspansi -->
+    <div id="expansion-slider-container" class="absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 w-4/5 max-w-xs p-2 rounded-lg shadow-lg z-10 hidden opacity-0">
+        <label for="expansion-slider" class="text-xs text-center block mb-1">Jarak Inti</label>
+        <input type="range" id="expansion-slider" min="1" max="4" step="0.1" value="1">
     </div>
     
     <!-- Modal Tabel Periodik -->
@@ -301,6 +358,9 @@
             neutrons: 0,
             electrons: 1,
             isNucleusSeparated: false,
+            isNucleusStructured: false,
+            isNucleusExpanded: false,
+            nucleusExpansionFactor: 1.0,
             is3DView: true,
         };
 
@@ -310,125 +370,124 @@
         // Data lengkap untuk 118 unsur
         const ELEMENT_DATA = [
             null,
-            {name:"Hidrogen",symbol:"H",commonNeutrons:0,stableNeutrons:[0,1],phase:"Gas",usage:"Bahan bakar bintang.",type:"nonmetal"},
-            {name:"Helium",symbol:"He",commonNeutrons:2,stableNeutrons:[1,2],phase:"Gas",usage:"Mengisi balon udara.",type:"noble-gas"},
-            {name:"Litium",symbol:"Li",commonNeutrons:4,stableNeutrons:[3,4],phase:"Padat",usage:"Baterai isi ulang.",type:"alkali-metal"},
-            {name:"Berilium",symbol:"Be",commonNeutrons:5,stableNeutrons:[5],phase:"Padat",usage:"Komponen teleskop.",type:"alkaline-earth-metal"},
-            {name:"Boron",symbol:"B",commonNeutrons:6,stableNeutrons:[5,6],phase:"Padat",usage:"Kaca tahan panas.",type:"metalloid"},
-            {name:"Karbon",symbol:"C",commonNeutrons:6,stableNeutrons:[6,7],phase:"Padat",usage:"Dasar kehidupan.",type:"nonmetal"},
-            {name:"Nitrogen",symbol:"N",commonNeutrons:7,stableNeutrons:[7,8],phase:"Gas",usage:"Pupuk, atmosfer.",type:"nonmetal"},
-            {name:"Oksigen",symbol:"O",commonNeutrons:8,stableNeutrons:[8,9,10],phase:"Gas",usage:"Pernapasan.",type:"nonmetal"},
-            {name:"Fluorin",symbol:"F",commonNeutrons:10,stableNeutrons:[10],phase:"Gas",usage:"Pasta gigi.",type:"halogen"},
-            {name:"Neon",symbol:"Ne",commonNeutrons:10,stableNeutrons:[10,11,12],phase:"Gas",usage:"Lampu iklan.",type:"noble-gas"},
-            {name:"Natrium",symbol:"Na",commonNeutrons:12,stableNeutrons:[12],phase:"Padat",usage:"Garam dapur.",type:"alkali-metal"},
-            {name:"Magnesium",symbol:"Mg",commonNeutrons:12,stableNeutrons:[12,13,14],phase:"Padat",usage:"Kembang api.",type:"alkaline-earth-metal"},
-            {name:"Aluminium",symbol:"Al",commonNeutrons:14,stableNeutrons:[14],phase:"Padat",usage:"Kaleng minuman.",type:"post-transition-metal"},
-            {name:"Silikon",symbol:"Si",commonNeutrons:14,stableNeutrons:[14,15,16],phase:"Padat",usage:"Chip komputer.",type:"metalloid"},
-            {name:"Fosfor",symbol:"P",commonNeutrons:16,stableNeutrons:[16],phase:"Padat",usage:"Ujung korek api.",type:"nonmetal"},
-            {name:"Belerang",symbol:"S",commonNeutrons:16,stableNeutrons:[16,17,18,20],phase:"Padat",usage:"Asam sulfat.",type:"nonmetal"},
-            {name:"Klorin",symbol:"Cl",commonNeutrons:18,stableNeutrons:[18,20],phase:"Gas",usage:"Disinfektan air.",type:"halogen"},
-            {name:"Argon",symbol:"Ar",commonNeutrons:22,stableNeutrons:[18,20,22],phase:"Gas",usage:"Pengisi bola lampu.",type:"noble-gas"},
-            {name:"Kalium",symbol:"K",commonNeutrons:20,stableNeutrons:[20,22],phase:"Padat",usage:"Fungsi saraf.",type:"alkali-metal"},
-            {name:"Kalsium",symbol:"Ca",commonNeutrons:20,stableNeutrons:[20,22,24,26,28],phase:"Padat",usage:"Tulang dan gigi.",type:"alkaline-earth-metal"},
-            {name:"Skandium",symbol:"Sc",commonNeutrons:24,stableNeutrons:[24],phase:"Padat",usage:"Paduan logam ringan.",type:"transition-metal"},
-            {name:"Titanium",symbol:"Ti",commonNeutrons:26,stableNeutrons:[24,25,26,27,28],phase:"Padat",usage:"Implan medis, pesawat.",type:"transition-metal"},
-            {name:"Vanadium",symbol:"V",commonNeutrons:28,stableNeutrons:[28],phase:"Padat",usage:"Baja tahan karat.",type:"transition-metal"},
-            {name:"Kromium",symbol:"Cr",commonNeutrons:28,stableNeutrons:[26,28,29,30],phase:"Padat",usage:"Pelapisan logam.",type:"transition-metal"},
-            {name:"Mangan",symbol:"Mn",commonNeutrons:30,stableNeutrons:[30],phase:"Padat",usage:"Produksi baja.",type:"transition-metal"},
-            {name:"Besi",symbol:"Fe",commonNeutrons:30,stableNeutrons:[28,30,31,32],phase:"Padat",usage:"Bahan bangunan utama.",type:"transition-metal"},
-            {name:"Kobalt",symbol:"Co",commonNeutrons:32,stableNeutrons:[32],phase:"Padat",usage:"Magnet, baterai.",type:"transition-metal"},
-            {name:"Nikel",symbol:"Ni",commonNeutrons:31,stableNeutrons:[30,32,33,34,36],phase:"Padat",usage:"Koin, baterai.",type:"transition-metal"},
-            {name:"Tembaga",symbol:"Cu",commonNeutrons:35,stableNeutrons:[34,36],phase:"Padat",usage:"Kabel listrik.",type:"transition-metal"},
-            {name:"Seng",symbol:"Zn",commonNeutrons:35,stableNeutrons:[34,36,37,38,40],phase:"Padat",usage:"Pelapis anti karat.",type:"transition-metal"},
-            {name:"Galium",symbol:"Ga",commonNeutrons:39,stableNeutrons:[38,40],phase:"Padat",usage:"Semikonduktor, LED.",type:"post-transition-metal"},
-            {name:"Germanium",symbol:"Ge",commonNeutrons:41,stableNeutrons:[40,42,43,44],phase:"Padat",usage:"Serat optik.",type:"metalloid"},
-            {name:"Arsen",symbol:"As",commonNeutrons:42,stableNeutrons:[42],phase:"Padat",usage:"Racun, semikonduktor.",type:"metalloid"},
-            {name:"Selenium",symbol:"Se",commonNeutrons:45,stableNeutrons:[42,44,45,46,48],phase:"Padat",usage:"Fotosel, sampo.",type:"nonmetal"},
-            {name:"Bromin",symbol:"Br",commonNeutrons:45,stableNeutrons:[44,46],phase:"Cair",usage:"Anti api.",type:"halogen"},
-            {name:"Kripton",symbol:"Kr",commonNeutrons:48,stableNeutrons:[42,44,46,47,48,50],phase:"Gas",usage:"Lampu kilat fotografi.",type:"noble-gas"},
-            {name:"Rubidium",symbol:"Rb",commonNeutrons:48,stableNeutrons:[48],phase:"Padat",usage:"Jam atom.",type:"alkali-metal"},
-            {name:"Stronsium",symbol:"Sr",commonNeutrons:50,stableNeutrons:[46,48,49,50],phase:"Padat",usage:"Kembang api merah.",type:"alkaline-earth-metal"},
-            {name:"Itrium",symbol:"Y",commonNeutrons:50,stableNeutrons:[50],phase:"Padat",usage:"Layar TV tabung (dulu).",type:"transition-metal"},
-            {name:"Zirkonium",symbol:"Zr",commonNeutrons:51,stableNeutrons:[50,51,52,54,56],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal"},
-            {name:"Niobium",symbol:"Nb",commonNeutrons:52,stableNeutrons:[52],phase:"Padat",usage:"Superkonduktor.",type:"transition-metal"},
-            {name:"Molibdenum",symbol:"Mo",commonNeutrons:54,stableNeutrons:[50,52,53,54,55,56,58],phase:"Padat",usage:"Paduan baja.",type:"transition-metal"},
-            {name:"Teknesium",symbol:"Tc",commonNeutrons:55,phase:"Padat",usage:"Diagnostik medis.",type:"transition-metal"},
-            {name:"Rutenium",symbol:"Ru",commonNeutrons:58,stableNeutrons:[52,54,55,56,57,58,60],phase:"Padat",usage:"Kontak listrik.",type:"transition-metal"},
-            {name:"Rodium",symbol:"Rh",commonNeutrons:58,stableNeutrons:[58],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal"},
-            {name:"Paladium",symbol:"Pd",commonNeutrons:60,stableNeutrons:[58,60,62,63,64,66],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal"},
-            {name:"Perak",symbol:"Ag",commonNeutrons:61,stableNeutrons:[60,62],phase:"Padat",usage:"Perhiasan, konduktor.",type:"transition-metal"},
-            {name:"Kadmium",symbol:"Cd",commonNeutrons:66,stableNeutrons:[60,62,64,65,66,68],phase:"Padat",usage:"Baterai Ni-Cd.",type:"transition-metal"},
-            {name:"Indium",symbol:"In",commonNeutrons:66,stableNeutrons:[64,66],phase:"Padat",usage:"Layar sentuh (ITO).",type:"post-transition-metal"},
-            {name:"Timah",symbol:"Sn",commonNeutrons:70,stableNeutrons:[62,64,65,66,67,68,69,70,72,74],phase:"Padat",usage:"Solder, pelapis.",type:"post-transition-metal"},
-            {name:"Antimon",symbol:"Sb",commonNeutrons:71,stableNeutrons:[70,72],phase:"Padat",usage:"Baterai timbal.",type:"metalloid"},
-            {name:"Telurium",symbol:"Te",commonNeutrons:76,stableNeutrons:[70,72,73,74,75,76,78],phase:"Padat",usage:"Paduan logam.",type:"metalloid"},
-            {name:"Yodium",symbol:"I",commonNeutrons:74,stableNeutrons:[74],phase:"Padat",usage:"Antiseptik.",type:"halogen"},
-            {name:"Xenon",symbol:"Xe",commonNeutrons:77,stableNeutrons:[70,72,74,75,76,77,78,80,82],phase:"Gas",usage:"Lampu mobil HID.",type:"noble-gas"},
-            {name:"Sesium",symbol:"Cs",commonNeutrons:78,stableNeutrons:[78],phase:"Padat",usage:"Jam atom.",type:"alkali-metal"},
-            {name:"Barium",symbol:"Ba",commonNeutrons:81,stableNeutrons:[74,76,78,79,80,81,82],phase:"Padat",usage:"Pencitraan sinar-X.",type:"alkaline-earth-metal"},
-            {name:"Lantanum",symbol:"La",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Lensa kamera.",type:"lanthanide"},
-            {name:"Serium",symbol:"Ce",commonNeutrons:82,stableNeutrons:[78,80,82,84],phase:"Padat",usage:"Batu geretan.",type:"lanthanide"},
-            {name:"Praseodimium",symbol:"Pr",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Kacamata las.",type:"lanthanide"},
-            {name:"Neodimium",symbol:"Nd",commonNeutrons:84,stableNeutrons:[82,83,84,85,86,88,90],phase:"Padat",usage:"Magnet super kuat.",type:"lanthanide"},
-            {name:"Prometium",symbol:"Pm",commonNeutrons:84,phase:"Padat",usage:"Cat berpendar.",type:"lanthanide"},
-            {name:"Samarium",symbol:"Sm",commonNeutrons:88,stableNeutrons:[82,86,87,88,90,92,94],phase:"Padat",usage:"Magnet suhu tinggi.",type:"lanthanide"},
-            {name:"Europium",symbol:"Eu",commonNeutrons:89,stableNeutrons:[88,90],phase:"Padat",usage:"Layar TV (merah).",type:"lanthanide"},
-            {name:"Gadolinium",symbol:"Gd",commonNeutrons:94,stableNeutrons:[90,92,93,94,96,98],phase:"Padat",usage:"Agen kontras MRI.",type:"lanthanide"},
-            {name:"Terbium",symbol:"Tb",commonNeutrons:96,stableNeutrons:[94],phase:"Padat",usage:"Layar (hijau).",type:"lanthanide"},
-            {name:"Disprosium",symbol:"Dy",commonNeutrons:99,stableNeutrons:[94,96,97,98,99,100,102],phase:"Padat",usage:"Magnet motor hibrida.",type:"lanthanide"},
-            {name:"Holmium",symbol:"Ho",commonNeutrons:98,stableNeutrons:[98],phase:"Padat",usage:"Laser bedah.",type:"lanthanide"},
-            {name:"Erbium",symbol:"Er",commonNeutrons:100,stableNeutrons:[96,98,99,100,102,104],phase:"Padat",usage:"Serat optik.",type:"lanthanide"},
-            {name:"Tulium",symbol:"Tm",commonNeutrons:100,stableNeutrons:[100],phase:"Padat",usage:"Mesin X-ray portabel.",type:"lanthanide"},
-            {name:"Iterbium",symbol:"Yb",commonNeutrons:103,stableNeutrons:[100,102,103,104,106,108],phase:"Padat",usage:"Laser inframerah.",type:"lanthanide"},
-            {name:"Lutetium",symbol:"Lu",commonNeutrons:106,stableNeutrons:[106],phase:"Padat",usage:"Detektor PET scan.",type:"lanthanide"},
-            {name:"Hafnium",symbol:"Hf",commonNeutrons:106,stableNeutrons:[102,104,105,106,107,108],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal"},
-            {name:"Tantalum",symbol:"Ta",commonNeutrons:108,stableNeutrons:[108],phase:"Padat",usage:"Kapasitor ponsel.",type:"transition-metal"},
-            {name:"Tungsten",symbol:"W",commonNeutrons:110,stableNeutrons:[108,110,111,112,114],phase:"Padat",usage:"Filamen bola lampu.",type:"transition-metal"},
-            {name:"Renium",symbol:"Re",commonNeutrons:111,stableNeutrons:[110,112],phase:"Padat",usage:"Mesin jet.",type:"transition-metal"},
-            {name:"Osmium",symbol:"Os",commonNeutrons:114,stableNeutrons:[110,112,113,114,116,118],phase:"Padat",usage:"Ujung pulpen.",type:"transition-metal"},
-            {name:"Iridium",symbol:"Ir",commonNeutrons:115,stableNeutrons:[114,116],phase:"Padat",usage:"Busi.",type:"transition-metal"},
-            {name:"Platina",symbol:"Pt",commonNeutrons:117,stableNeutrons:[114,115,116,117,118,120],phase:"Padat",usage:"Perhiasan, katalis.",type:"transition-metal"},
-            {name:"Emas",symbol:"Au",commonNeutrons:118,stableNeutrons:[118],phase:"Padat",usage:"Perhiasan, elektronik.",type:"transition-metal"},
-            {name:"Raksa",symbol:"Hg",commonNeutrons:122,stableNeutrons:[118,120,121,122,124,126],phase:"Cair",usage:"Termometer (dulu).",type:"transition-metal"},
-            {name:"Talium",symbol:"Tl",commonNeutrons:123,stableNeutrons:[122,124],phase:"Padat",usage:"Detektor inframerah.",type:"post-transition-metal"},
-            {name:"Timbal",symbol:"Pb",commonNeutrons:126,stableNeutrons:[124,125,126,127,128],phase:"Padat",usage:"Baterai mobil (aki).",type:"post-transition-metal"},
-            {name:"Bismut",symbol:"Bi",commonNeutrons:126,stableNeutrons:[126],phase:"Padat",usage:"Obat sakit perut.",type:"post-transition-metal"},
-            // Unsur setelah Bismut tidak memiliki isotop stabil
-            {name:"Polonium",symbol:"Po",commonNeutrons:125,phase:"Padat",usage:"Pemanas satelit.",type:"post-transition-metal"},
-            {name:"Astatin",symbol:"At",commonNeutrons:125,phase:"Padat",usage:"Terapi kanker.",type:"halogen"},
-            {name:"Radon",symbol:"Rn",commonNeutrons:136,phase:"Gas",usage:"Terapi radiasi.",type:"noble-gas"},
-            {name:"Fransium",symbol:"Fr",commonNeutrons:136,phase:"Padat",usage:"Penelitian ilmiah.",type:"alkali-metal"},
-            {name:"Radium",symbol:"Ra",commonNeutrons:138,phase:"Padat",usage:"Cat jam berpendar (dulu).",type:"alkaline-earth-metal"},
-            {name:"Aktinium",symbol:"Ac",commonNeutrons:138,phase:"Padat",usage:"Sumber neutron.",type:"actinide"},
-            {name:"Torium",symbol:"Th",commonNeutrons:142,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide"},
-            {name:"Protaktinium",symbol:"Pa",commonNeutrons:140,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Uranium",symbol:"U",commonNeutrons:146,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide"},
-            {name:"Neptunium",symbol:"Np",commonNeutrons:146,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Plutonium",symbol:"Pu",commonNeutrons:150,phase:"Padat",usage:"Senjata nuklir, sumber daya.",type:"actinide"},
-            {name:"Amerisium",symbol:"Am",commonNeutrons:152,phase:"Padat",usage:"Detektor asap.",type:"actinide"},
-            {name:"Kurium",symbol:"Cm",commonNeutrons:153,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Berkelium",symbol:"Bk",commonNeutrons:152,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Kalifornium",symbol:"Cf",commonNeutrons:153,phase:"Padat",usage:"Memulai reaktor nuklir.",type:"actinide"},
-            {name:"Einsteinium",symbol:"Es",commonNeutrons:155,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Fermium",symbol:"Fm",commonNeutrons:158,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Mendelevium",symbol:"Md",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Nobelium",symbol:"No",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Lawrensium",symbol:"Lr",commonNeutrons:161,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide"},
-            {name:"Rutherfordium",symbol:"Rf",commonNeutrons:163,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Dubnium",symbol:"Db",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Seaborgium",symbol:"Sg",commonNeutrons:167,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Bohrium",symbol:"Bh",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Hassium",symbol:"Hs",commonNeutrons:169,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Meitnerium",symbol:"Mt",commonNeutrons:170,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Darmstadtium",symbol:"Ds",commonNeutrons:172,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Roentgenium",symbol:"Rg",commonNeutrons:171,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Kopernisium",symbol:"Cn",commonNeutrons:173,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"transition-metal"},
-            {name:"Nihonium",symbol:"Nh",commonNeutrons:173,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
-            {name:"Flerovium",symbol:"Fl",commonNeutrons:175,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
-            {name:"Moskovium",symbol:"Mc",commonNeutrons:174,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
-            {name:"Livermorium",symbol:"Lv",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal"},
-            {name:"Tenesin",symbol:"Ts",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"halogen"},
-            {name:"Oganesson",symbol:"Og",commonNeutrons:176,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"noble-gas"}
+            {name:"Hidrogen",symbol:"H",commonNeutrons:0,stableNeutrons:[0,1],phase:"Gas",usage:"Bahan bakar bintang.",type:"nonmetal",config:"1s<sup class='-top-1'>1</sup>"},
+            {name:"Helium",symbol:"He",commonNeutrons:2,stableNeutrons:[1,2],phase:"Gas",usage:"Mengisi balon udara.",type:"noble-gas",config:"1s<sup class='-top-1'>2</sup>"},
+            {name:"Litium",symbol:"Li",commonNeutrons:4,stableNeutrons:[3,4],phase:"Padat",usage:"Baterai isi ulang.",type:"alkali-metal",config:"[He] 2s<sup class='-top-1'>1</sup>"},
+            {name:"Berilium",symbol:"Be",commonNeutrons:5,stableNeutrons:[5],phase:"Padat",usage:"Komponen teleskop.",type:"alkaline-earth-metal",config:"[He] 2s<sup class='-top-1'>2</sup>"},
+            {name:"Boron",symbol:"B",commonNeutrons:6,stableNeutrons:[5,6],phase:"Padat",usage:"Kaca tahan panas.",type:"metalloid",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>1</sup>"},
+            {name:"Karbon",symbol:"C",commonNeutrons:6,stableNeutrons:[6,7],phase:"Padat",usage:"Dasar kehidupan.",type:"nonmetal",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>2</sup>"},
+            {name:"Nitrogen",symbol:"N",commonNeutrons:7,stableNeutrons:[7,8],phase:"Gas",usage:"Pupuk, atmosfer.",type:"nonmetal",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>3</sup>"},
+            {name:"Oksigen",symbol:"O",commonNeutrons:8,stableNeutrons:[8,9,10],phase:"Gas",usage:"Pernapasan.",type:"nonmetal",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>4</sup>"},
+            {name:"Fluorin",symbol:"F",commonNeutrons:10,stableNeutrons:[10],phase:"Gas",usage:"Pasta gigi.",type:"halogen",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>5</sup>"},
+            {name:"Neon",symbol:"Ne",commonNeutrons:10,stableNeutrons:[10,11,12],phase:"Gas",usage:"Lampu iklan.",type:"noble-gas",config:"[He] 2s<sup class='-top-1'>2</sup> 2p<sup class='-top-1'>6</sup>"},
+            {name:"Natrium",symbol:"Na",commonNeutrons:12,stableNeutrons:[12],phase:"Padat",usage:"Garam dapur.",type:"alkali-metal",config:"[Ne] 3s<sup class='-top-1'>1</sup>"},
+            {name:"Magnesium",symbol:"Mg",commonNeutrons:12,stableNeutrons:[12,13,14],phase:"Padat",usage:"Kembang api.",type:"alkaline-earth-metal",config:"[Ne] 3s<sup class='-top-1'>2</sup>"},
+            {name:"Aluminium",symbol:"Al",commonNeutrons:14,stableNeutrons:[14],phase:"Padat",usage:"Kaleng minuman.",type:"post-transition-metal",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>1</sup>"},
+            {name:"Silikon",symbol:"Si",commonNeutrons:14,stableNeutrons:[14,15,16],phase:"Padat",usage:"Chip komputer.",type:"metalloid",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>2</sup>"},
+            {name:"Fosfor",symbol:"P",commonNeutrons:16,stableNeutrons:[16],phase:"Padat",usage:"Ujung korek api.",type:"nonmetal",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>3</sup>"},
+            {name:"Belerang",symbol:"S",commonNeutrons:16,stableNeutrons:[16,17,18,20],phase:"Padat",usage:"Asam sulfat.",type:"nonmetal",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>4</sup>"},
+            {name:"Klorin",symbol:"Cl",commonNeutrons:18,stableNeutrons:[18,20],phase:"Gas",usage:"Disinfektan air.",type:"halogen",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>5</sup>"},
+            {name:"Argon",symbol:"Ar",commonNeutrons:22,stableNeutrons:[18,20,22],phase:"Gas",usage:"Pengisi bola lampu.",type:"noble-gas",config:"[Ne] 3s<sup class='-top-1'>2</sup> 3p<sup class='-top-1'>6</sup>"},
+            {name:"Kalium",symbol:"K",commonNeutrons:20,stableNeutrons:[20,22],phase:"Padat",usage:"Fungsi saraf.",type:"alkali-metal",config:"[Ar] 4s<sup class='-top-1'>1</sup>"},
+            {name:"Kalsium",symbol:"Ca",commonNeutrons:20,stableNeutrons:[20,22,24,26,28],phase:"Padat",usage:"Tulang dan gigi.",type:"alkaline-earth-metal",config:"[Ar] 4s<sup class='-top-1'>2</sup>"},
+            {name:"Skandium",symbol:"Sc",commonNeutrons:24,stableNeutrons:[24],phase:"Padat",usage:"Paduan logam ringan.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>1</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Titanium",symbol:"Ti",commonNeutrons:26,stableNeutrons:[24,25,26,27,28],phase:"Padat",usage:"Implan medis, pesawat.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>2</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Vanadium",symbol:"V",commonNeutrons:28,stableNeutrons:[28],phase:"Padat",usage:"Baja tahan karat.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>3</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Kromium",symbol:"Cr",commonNeutrons:28,stableNeutrons:[26,28,29,30],phase:"Padat",usage:"Pelapisan logam.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>5</sup> 4s<sup class='-top-1'>1</sup>"},
+            {name:"Mangan",symbol:"Mn",commonNeutrons:30,stableNeutrons:[30],phase:"Padat",usage:"Produksi baja.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>5</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Besi",symbol:"Fe",commonNeutrons:30,stableNeutrons:[28,30,31,32],phase:"Padat",usage:"Bahan bangunan utama.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>6</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Kobalt",symbol:"Co",commonNeutrons:32,stableNeutrons:[32],phase:"Padat",usage:"Magnet, baterai.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>7</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Nikel",symbol:"Ni",commonNeutrons:31,stableNeutrons:[30,32,33,34,36],phase:"Padat",usage:"Koin, baterai.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>8</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Tembaga",symbol:"Cu",commonNeutrons:35,stableNeutrons:[34,36],phase:"Padat",usage:"Kabel listrik.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>1</sup>"},
+            {name:"Seng",symbol:"Zn",commonNeutrons:35,stableNeutrons:[34,36,37,38,40],phase:"Padat",usage:"Pelapis anti karat.",type:"transition-metal",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup>"},
+            {name:"Galium",symbol:"Ga",commonNeutrons:39,stableNeutrons:[38,40],phase:"Padat",usage:"Semikonduktor, LED.",type:"post-transition-metal",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>1</sup>"},
+            {name:"Germanium",symbol:"Ge",commonNeutrons:41,stableNeutrons:[40,42,43,44],phase:"Padat",usage:"Serat optik.",type:"metalloid",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>2</sup>"},
+            {name:"Arsen",symbol:"As",commonNeutrons:42,stableNeutrons:[42],phase:"Padat",usage:"Racun, semikonduktor.",type:"metalloid",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>3</sup>"},
+            {name:"Selenium",symbol:"Se",commonNeutrons:45,stableNeutrons:[42,44,45,46,48],phase:"Padat",usage:"Fotosel, sampo.",type:"nonmetal",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>4</sup>"},
+            {name:"Bromin",symbol:"Br",commonNeutrons:45,stableNeutrons:[44,46],phase:"Cair",usage:"Anti api.",type:"halogen",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>5</sup>"},
+            {name:"Kripton",symbol:"Kr",commonNeutrons:48,stableNeutrons:[42,44,46,47,48,50],phase:"Gas",usage:"Lampu kilat fotografi.",type:"noble-gas",config:"[Ar] 3d<sup class='-top-1'>10</sup> 4s<sup class='-top-1'>2</sup> 4p<sup class='-top-1'>6</sup>"},
+            {name:"Rubidium",symbol:"Rb",commonNeutrons:48,stableNeutrons:[48],phase:"Padat",usage:"Jam atom.",type:"alkali-metal",config:"[Kr] 5s<sup class='-top-1'>1</sup>"},
+            {name:"Stronsium",symbol:"Sr",commonNeutrons:50,stableNeutrons:[46,48,49,50],phase:"Padat",usage:"Kembang api merah.",type:"alkaline-earth-metal",config:"[Kr] 5s<sup class='-top-1'>2</sup>"},
+            {name:"Itrium",symbol:"Y",commonNeutrons:50,stableNeutrons:[50],phase:"Padat",usage:"Layar TV tabung (dulu).",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>1</sup> 5s<sup class='-top-1'>2</sup>"},
+            {name:"Zirkonium",symbol:"Zr",commonNeutrons:51,stableNeutrons:[50,51,52,54,56],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>2</sup> 5s<sup class='-top-1'>2</sup>"},
+            {name:"Niobium",symbol:"Nb",commonNeutrons:52,stableNeutrons:[52],phase:"Padat",usage:"Superkonduktor.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>4</sup> 5s<sup class='-top-1'>1</sup>"},
+            {name:"Molibdenum",symbol:"Mo",commonNeutrons:54,stableNeutrons:[50,52,53,54,55,56,58],phase:"Padat",usage:"Paduan baja.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>5</sup> 5s<sup class='-top-1'>1</sup>"},
+            {name:"Teknesium",symbol:"Tc",commonNeutrons:55,phase:"Padat",usage:"Diagnostik medis.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>5</sup> 5s<sup class='-top-1'>2</sup>"},
+            {name:"Rutenium",symbol:"Ru",commonNeutrons:58,stableNeutrons:[52,54,55,56,57,58,60],phase:"Padat",usage:"Kontak listrik.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>7</sup> 5s<sup class='-top-1'>1</sup>"},
+            {name:"Rodium",symbol:"Rh",commonNeutrons:58,stableNeutrons:[58],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>8</sup> 5s<sup class='-top-1'>1</sup>"},
+            {name:"Paladium",symbol:"Pd",commonNeutrons:60,stableNeutrons:[58,60,62,63,64,66],phase:"Padat",usage:"Katalis knalpot.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>10</sup>"},
+            {name:"Perak",symbol:"Ag",commonNeutrons:61,stableNeutrons:[60,62],phase:"Padat",usage:"Perhiasan, konduktor.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>1</sup>"},
+            {name:"Kadmium",symbol:"Cd",commonNeutrons:66,stableNeutrons:[60,62,64,65,66,68],phase:"Padat",usage:"Baterai Ni-Cd.",type:"transition-metal",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup>"},
+            {name:"Indium",symbol:"In",commonNeutrons:66,stableNeutrons:[64,66],phase:"Padat",usage:"Layar sentuh (ITO).",type:"post-transition-metal",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>1</sup>"},
+            {name:"Timah",symbol:"Sn",commonNeutrons:70,stableNeutrons:[62,64,65,66,67,68,69,70,72,74],phase:"Padat",usage:"Solder, pelapis.",type:"post-transition-metal",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>2</sup>"},
+            {name:"Antimon",symbol:"Sb",commonNeutrons:71,stableNeutrons:[70,72],phase:"Padat",usage:"Baterai timbal.",type:"metalloid",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>3</sup>"},
+            {name:"Telurium",symbol:"Te",commonNeutrons:76,stableNeutrons:[70,72,73,74,75,76,78],phase:"Padat",usage:"Paduan logam.",type:"metalloid",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>4</sup>"},
+            {name:"Yodium",symbol:"I",commonNeutrons:74,stableNeutrons:[74],phase:"Padat",usage:"Antiseptik.",type:"halogen",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>5</sup>"},
+            {name:"Xenon",symbol:"Xe",commonNeutrons:77,stableNeutrons:[70,72,74,75,76,77,78,80,82],phase:"Gas",usage:"Lampu mobil HID.",type:"noble-gas",config:"[Kr] 4d<sup class='-top-1'>10</sup> 5s<sup class='-top-1'>2</sup> 5p<sup class='-top-1'>6</sup>"},
+            {name:"Sesium",symbol:"Cs",commonNeutrons:78,stableNeutrons:[78],phase:"Padat",usage:"Jam atom.",type:"alkali-metal",config:"[Xe] 6s<sup class='-top-1'>1</sup>"},
+            {name:"Barium",symbol:"Ba",commonNeutrons:81,stableNeutrons:[74,76,78,79,80,81,82],phase:"Padat",usage:"Pencitraan sinar-X.",type:"alkaline-earth-metal",config:"[Xe] 6s<sup class='-top-1'>2</sup>"},
+            {name:"Lantanum",symbol:"La",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Lensa kamera.",type:"lanthanide",config:"[Xe] 5d<sup class='-top-1'>1</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Serium",symbol:"Ce",commonNeutrons:82,stableNeutrons:[78,80,82,84],phase:"Padat",usage:"Batu geretan.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>1</sup> 5d<sup class='-top-1'>1</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Praseodimium",symbol:"Pr",commonNeutrons:82,stableNeutrons:[82],phase:"Padat",usage:"Kacamata las.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>3</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Neodimium",symbol:"Nd",commonNeutrons:84,stableNeutrons:[82,83,84,85,86,88,90],phase:"Padat",usage:"Magnet super kuat.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>4</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Prometium",symbol:"Pm",commonNeutrons:84,phase:"Padat",usage:"Cat berpendar.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>5</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Samarium",symbol:"Sm",commonNeutrons:88,stableNeutrons:[82,86,87,88,90,92,94],phase:"Padat",usage:"Magnet suhu tinggi.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>6</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Europium",symbol:"Eu",commonNeutrons:89,stableNeutrons:[88,90],phase:"Padat",usage:"Layar TV (merah).",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>7</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Gadolinium",symbol:"Gd",commonNeutrons:94,stableNeutrons:[90,92,93,94,96,98],phase:"Padat",usage:"Agen kontras MRI.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>7</sup> 5d<sup class='-top-1'>1</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Terbium",symbol:"Tb",commonNeutrons:96,stableNeutrons:[94],phase:"Padat",usage:"Layar (hijau).",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>9</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Disprosium",symbol:"Dy",commonNeutrons:99,stableNeutrons:[94,96,97,98,99,100,102],phase:"Padat",usage:"Magnet motor hibrida.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Holmium",symbol:"Ho",commonNeutrons:98,stableNeutrons:[98],phase:"Padat",usage:"Laser bedah.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>11</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Erbium",symbol:"Er",commonNeutrons:100,stableNeutrons:[96,98,99,100,102,104],phase:"Padat",usage:"Serat optik.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>12</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Tulium",symbol:"Tm",commonNeutrons:100,stableNeutrons:[100],phase:"Padat",usage:"Mesin X-ray portabel.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>13</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Iterbium",symbol:"Yb",commonNeutrons:103,stableNeutrons:[100,102,103,104,106,108],phase:"Padat",usage:"Laser inframerah.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>14</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Lutetium",symbol:"Lu",commonNeutrons:106,stableNeutrons:[106],phase:"Padat",usage:"Detektor PET scan.",type:"lanthanide",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>1</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Hafnium",symbol:"Hf",commonNeutrons:106,stableNeutrons:[102,104,105,106,107,108],phase:"Padat",usage:"Reaktor nuklir.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>2</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Tantalum",symbol:"Ta",commonNeutrons:108,stableNeutrons:[108],phase:"Padat",usage:"Kapasitor ponsel.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>3</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Tungsten",symbol:"W",commonNeutrons:110,stableNeutrons:[108,110,111,112,114],phase:"Padat",usage:"Filamen bola lampu.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>4</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Renium",symbol:"Re",commonNeutrons:111,stableNeutrons:[110,112],phase:"Padat",usage:"Mesin jet.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>5</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Osmium",symbol:"Os",commonNeutrons:114,stableNeutrons:[110,112,113,114,116,118],phase:"Padat",usage:"Ujung pulpen.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>6</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Iridium",symbol:"Ir",commonNeutrons:115,stableNeutrons:[114,116],phase:"Padat",usage:"Busi.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>7</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Platina",symbol:"Pt",commonNeutrons:117,stableNeutrons:[114,115,116,117,118,120],phase:"Padat",usage:"Perhiasan, katalis.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>9</sup> 6s<sup class='-top-1'>1</sup>"},
+            {name:"Emas",symbol:"Au",commonNeutrons:118,stableNeutrons:[118],phase:"Padat",usage:"Perhiasan, elektronik.",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>1</sup>"},
+            {name:"Raksa",symbol:"Hg",commonNeutrons:122,stableNeutrons:[118,120,121,122,124,126],phase:"Cair",usage:"Termometer (dulu).",type:"transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup>"},
+            {name:"Talium",symbol:"Tl",commonNeutrons:123,stableNeutrons:[122,124],phase:"Padat",usage:"Detektor inframerah.",type:"post-transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>1</sup>"},
+            {name:"Timbal",symbol:"Pb",commonNeutrons:126,stableNeutrons:[124,125,126,127,128],phase:"Padat",usage:"Baterai mobil (aki).",type:"post-transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>2</sup>"},
+            {name:"Bismut",symbol:"Bi",commonNeutrons:126,stableNeutrons:[126],phase:"Padat",usage:"Obat sakit perut.",type:"post-transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>3</sup>"},
+            {name:"Polonium",symbol:"Po",commonNeutrons:125,phase:"Padat",usage:"Pemanas satelit.",type:"post-transition-metal",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>4</sup>"},
+            {name:"Astatin",symbol:"At",commonNeutrons:125,phase:"Padat",usage:"Terapi kanker.",type:"halogen",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>5</sup>"},
+            {name:"Radon",symbol:"Rn",commonNeutrons:136,phase:"Gas",usage:"Terapi radiasi.",type:"noble-gas",config:"[Xe] 4f<sup class='-top-1'>14</sup> 5d<sup class='-top-1'>10</sup> 6s<sup class='-top-1'>2</sup> 6p<sup class='-top-1'>6</sup>"},
+            {name:"Fransium",symbol:"Fr",commonNeutrons:136,phase:"Padat",usage:"Penelitian ilmiah.",type:"alkali-metal",config:"[Rn] 7s<sup class='-top-1'>1</sup>"},
+            {name:"Radium",symbol:"Ra",commonNeutrons:138,phase:"Padat",usage:"Cat jam berpendar (dulu).",type:"alkaline-earth-metal",config:"[Rn] 7s<sup class='-top-1'>2</sup>"},
+            {name:"Aktinium",symbol:"Ac",commonNeutrons:138,phase:"Padat",usage:"Sumber neutron.",type:"actinide",config:"[Rn] 6d<sup class='-top-1'>1</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Torium",symbol:"Th",commonNeutrons:142,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide",config:"[Rn] 6d<sup class='-top-1'>2</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Protaktinium",symbol:"Pa",commonNeutrons:140,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>2</sup> 6d<sup class='-top-1'>1</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Uranium",symbol:"U",commonNeutrons:146,phase:"Padat",usage:"Bahan bakar nuklir.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>3</sup> 6d<sup class='-top-1'>1</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Neptunium",symbol:"Np",commonNeutrons:146,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>4</sup> 6d<sup class='-top-1'>1</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Plutonium",symbol:"Pu",commonNeutrons:150,phase:"Padat",usage:"Senjata nuklir, sumber daya.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>6</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Amerisium",symbol:"Am",commonNeutrons:152,phase:"Padat",usage:"Detektor asap.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>7</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Kurium",symbol:"Cm",commonNeutrons:153,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>7</sup> 6d<sup class='-top-1'>1</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Berkelium",symbol:"Bk",commonNeutrons:152,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>9</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Kalifornium",symbol:"Cf",commonNeutrons:153,phase:"Padat",usage:"Memulai reaktor nuklir.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Einsteinium",symbol:"Es",commonNeutrons:155,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>11</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Fermium",symbol:"Fm",commonNeutrons:158,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>12</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Mendelevium",symbol:"Md",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>13</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Nobelium",symbol:"No",commonNeutrons:159,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>14</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Lawrensium",symbol:"Lr",commonNeutrons:161,phase:"Padat",usage:"Penelitian ilmiah.",type:"actinide",config:"[Rn] 5f<sup class='-top-1'>14</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>1</sup>"},
+            {name:"Rutherfordium",symbol:"Rf",commonNeutrons:163,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>2</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Dubnium",symbol:"Db",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>3</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Seaborgium",symbol:"Sg",commonNeutrons:167,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>4</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Bohrium",symbol:"Bh",commonNeutrons:165,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>5</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Hassium",symbol:"Hs",commonNeutrons:169,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>6</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Meitnerium",symbol:"Mt",commonNeutrons:170,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>7</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Darmstadtium",symbol:"Ds",commonNeutrons:172,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>8</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Roentgenium",symbol:"Rg",commonNeutrons:171,phase:"Padat",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>9</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Kopernisium",symbol:"Cn",commonNeutrons:173,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup>"},
+            {name:"Nihonium",symbol:"Nh",commonNeutrons:173,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>1</sup>"},
+            {name:"Flerovium",symbol:"Fl",commonNeutrons:175,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>2</sup>"},
+            {name:"Moskovium",symbol:"Mc",commonNeutrons:174,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>3</sup>"},
+            {name:"Livermorium",symbol:"Lv",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"post-transition-metal",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>4</sup>"},
+            {name:"Tenesin",symbol:"Ts",commonNeutrons:177,phase:"Padat (diprediksi)",usage:"Penelitian ilmiah.",type:"halogen",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>5</sup>"},
+            {name:"Oganesson",symbol:"Og",commonNeutrons:176,phase:"Gas (diprediksi)",usage:"Penelitian ilmiah.",type:"noble-gas",config:"[Rn] 5f<sup class='-top-1'>14</sup> 6d<sup class='-top-1'>10</sup> 7s<sup class='-top-1'>2</sup> 7p<sup class='-top-1'>6</sup>"}
         ];
 
         // --- FUNGSI UTAMA ---
@@ -559,16 +618,47 @@
         function arrangeNucleons() {
             const nucleons = [...protons, ...neutrons];
             if (nucleons.length === 0) return;
-            const radius = appState.isNucleusSeparated ? NUCLEUS_SEPARATION_FACTOR : Math.cbrt(nucleons.length) * PARTICLE_RADIUS * 0.7;
-            nucleons.forEach((nucleon, i) => {
-                const phi = Math.acos(-1 + (2 * i) / nucleons.length);
-                const theta = Math.sqrt(nucleons.length * Math.PI) * phi;
-                nucleon.position.set(
-                    radius * Math.cos(theta) * Math.sin(phi),
-                    radius * Math.sin(theta) * Math.sin(phi),
-                    radius * Math.cos(phi)
-                );
-            });
+
+            if (appState.isNucleusStructured) {
+                // Mode 1: Structured Grid Layout
+                const spacing = PARTICLE_RADIUS * 2.5;
+                const n = nucleons.length;
+                const side = Math.ceil(Math.cbrt(n));
+                const offset = - (side - 1) * spacing / 2;
+                
+                let i = 0;
+                for (let z = 0; z < side; z++) {
+                    for (let y = 0; y < side; y++) {
+                        for (let x = 0; x < side; x++) {
+                            if (i < n) {
+                                nucleons[i].position.set(offset + x * spacing, offset + y * spacing, offset + z * spacing);
+                                i++;
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Default, Separated, and Expanded Modes all use Fibonacci Sphere
+                let radius;
+                if(appState.isNucleusSeparated) {
+                    radius = NUCLEUS_SEPARATION_FACTOR * 2;
+                } else {
+                    radius = Math.cbrt(nucleons.length) * PARTICLE_RADIUS * 0.7;
+                    if(appState.isNucleusExpanded) {
+                        radius *= appState.nucleusExpansionFactor;
+                    }
+                }
+
+                 nucleons.forEach((nucleon, i) => {
+                    const phi = Math.acos(-1 + (2 * i) / nucleons.length);
+                    const theta = Math.sqrt(nucleons.length * Math.PI) * phi;
+                    nucleon.position.set(
+                        radius * Math.cos(theta) * Math.sin(phi),
+                        radius * Math.sin(theta) * Math.sin(phi),
+                        radius * Math.cos(phi)
+                    );
+                });
+            }
         }
 
         // --- FUNGSI KONTROL & INTERAKSI (REFACTORED) ---
@@ -596,15 +686,65 @@
             appState.neutrons = 0;
             appState.electrons = 1;
             appState.isNucleusSeparated = false;
+            appState.isNucleusStructured = false;
+            appState.isNucleusExpanded = false;
+            appState.nucleusExpansionFactor = 1;
             appState.is3DView = true;
-            domElements.toggleNucleus.textContent = 'Pisahkan Inti';
+            
+            domElements.expansionSlider.value = 1;
             domElements.viewToggleText.textContent = '2D';
+            
+            updateUINucleusModes(); // Update all UI states at once
             buildAtomFromState();
         }
-
+        
+        // PERBAIKAN: Logika toggle yang lebih robust
         function toggleNucleusSeparation() {
-            appState.isNucleusSeparated = !appState.isNucleusSeparated;
+            const wasOn = appState.isNucleusSeparated;
+            setAllNucleusModesOff();
+            if (!wasOn) appState.isNucleusSeparated = true;
+            updateUINucleusModes();
+            arrangeNucleons();
+        }
+        
+        function toggleNucleusStructure() {
+            const wasOn = appState.isNucleusStructured;
+            setAllNucleusModesOff();
+            if (!wasOn) appState.isNucleusStructured = true;
+            updateUINucleusModes();
+            arrangeNucleons();
+        }
+
+        function toggleNucleusExpansion() {
+            const wasOn = appState.isNucleusExpanded;
+            setAllNucleusModesOff();
+            if (!wasOn) appState.isNucleusExpanded = true;
+            updateUINucleusModes();
+            arrangeNucleons();
+        }
+
+        function setAllNucleusModesOff() {
+            appState.isNucleusSeparated = false;
+            appState.isNucleusStructured = false;
+            appState.isNucleusExpanded = false;
+        }
+
+        function updateUINucleusModes() {
             domElements.toggleNucleus.textContent = appState.isNucleusSeparated ? 'Satukan Inti' : 'Pisahkan Inti';
+            domElements.toggleNucleus.disabled = appState.isNucleusStructured || appState.isNucleusExpanded;
+            domElements.structureToggleBtn.classList.toggle('active', appState.isNucleusStructured);
+            domElements.expansionToggleBtn.classList.toggle('active', appState.isNucleusExpanded);
+            if (appState.isNucleusExpanded) {
+                domElements.expansionSliderContainer.classList.remove('hidden');
+                setTimeout(() => domElements.expansionSliderContainer.classList.remove('opacity-0'), 10);
+            } else {
+                domElements.expansionSliderContainer.classList.add('opacity-0');
+                setTimeout(() => domElements.expansionSliderContainer.classList.add('hidden'), 300);
+            }
+        }
+
+        function handleExpansionSlider(event) {
+            appState.nucleusExpansionFactor = parseFloat(event.target.value);
             arrangeNucleons();
         }
 
@@ -746,6 +886,7 @@
             domElements.elementPhase.textContent = data.phase;
             domElements.elementUsage.textContent = data.usage;
             domElements.charge.textContent = charge > 0 ? `+${charge}` : charge;
+            domElements.electronConfigString.innerHTML = data.config || '-';
             
             const stabilitySpan = domElements.coreStability;
             if (numProtons > 83) {
@@ -779,6 +920,11 @@
             domElements.coreStability = document.getElementById('core-stability');
             domElements.elementPhase = document.getElementById('element-phase');
             domElements.elementUsage = document.getElementById('element-usage');
+            domElements.structureToggleBtn = document.getElementById('structure-toggle-btn');
+            domElements.expansionToggleBtn = document.getElementById('expansion-toggle-btn');
+            domElements.expansionSliderContainer = document.getElementById('expansion-slider-container');
+            domElements.expansionSlider = document.getElementById('expansion-slider');
+            domElements.electronConfigString = document.getElementById('electron-config-string');
         }
 
         function setupEventListeners() {
@@ -798,6 +944,8 @@
             document.getElementById('reset-atom').addEventListener('click', resetAtom);
             // Side controls
             document.getElementById('periodic-table-btn').addEventListener('click', togglePeriodicTable);
+            document.getElementById('structure-toggle-btn').addEventListener('click', toggleNucleusStructure);
+            document.getElementById('expansion-toggle-btn').addEventListener('click', toggleNucleusExpansion);
             document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
             document.getElementById('view-toggle-btn').addEventListener('click', toggleViewMode);
             document.getElementById('zoom-in-btn').addEventListener('click', () => zoom(0.8));
@@ -808,6 +956,7 @@
             document.getElementById('periodic-table-backdrop').addEventListener('click', togglePeriodicTable);
             document.getElementById('cancel-warning-btn').addEventListener('click', cancelWarning);
             document.getElementById('continue-warning-btn').addEventListener('click', continueWarning);
+            domElements.expansionSlider.addEventListener('input', handleExpansionSlider);
         }
 
         document.addEventListener('DOMContentLoaded', init);
