@@ -92,12 +92,16 @@
         body.light-mode .stability-tidak-stabil { color: #ea580c; }
 
         /* Gaya baru untuk panel yang bisa disembunyikan ke samping */
-        #info-panel, #lattice-info-panel {
+        #info-panel, #lattice-info-panel, #lattice-controls-panel {
             transition: transform 0.5s ease-in-out;
         }
 
-        #info-panel.collapsed-side {
+        #info-panel.collapsed-side-right, #lattice-info-panel.collapsed-side-right {
             transform: translateX(calc(100% + 2rem));
+        }
+
+        #lattice-controls-panel.collapsed-side-left {
+            transform: translateX(calc(-100% - 2rem));
         }
         
         /* Gaya baru untuk tombol ikon di sisi layar */
@@ -316,7 +320,7 @@
         <div id="info-panel" class="panel absolute top-44 sm:top-40 md:top-4 right-2 md:right-4 p-3 md:p-4 rounded-lg shadow-lg w-auto md:w-72 z-10">
             <div id="info-header" class="flex justify-between items-center cursor-pointer">
                 <h2 class="text-base md:text-lg font-bold">Informasi Atom</h2>
-                <svg id="info-arrow" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg id="info-arrow" class="w-6 h-6 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
             </div>
@@ -365,44 +369,72 @@
     
     <!-- === UI UNTUK MODE STRUKTUR KISI === -->
     <div id="lattice-sim-ui" class="hidden">
+        <!-- Tombol untuk menampilkan kembali panel kontrol kisi -->
+        <button id="show-lattice-controls-btn" class="icon-btn absolute top-28 left-4 z-10 hidden" aria-label="Tampilkan Kontrol Kisi">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+
         <!-- Panel Kontrol Kiri -->
         <div id="lattice-controls-panel" class="panel absolute top-44 sm:top-40 md:top-28 left-2 md:left-4 p-4 rounded-lg shadow-lg w-auto z-10">
-             <div id="lattice-controls" class="space-y-4">
-                <div>
-                    <label for="lattice-type-select" class="block text-sm font-medium mb-2">Struktur Kisi</label>
-                    <select id="lattice-type-select">
-                        <option value="sc">Simple Cubic</option>
-                        <option value="bcc">Body-Centered Cubic</option>
-                        <option value="fcc">Face-Centered Cubic</option>
-                        <option value="hcp">Hexagonal Close-Packed</option>
-                    </select>
+             <div id="lattice-controls-header" class="flex justify-between items-center cursor-pointer mb-4">
+                <h2 class="text-base font-bold">Kontrol Kisi</h2>
+                <svg id="lattice-controls-arrow" class="w-6 h-6 transition-transform transform -rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+             </div>
+             <div id="lattice-controls-content" class="border-t pt-4" style="border-color: var(--panel-border-color);">
+                <div id="lattice-controls" class="space-y-4">
+                    <div>
+                        <label for="lattice-type-select" class="block text-sm font-medium mb-2">Struktur Kisi</label>
+                        <select id="lattice-type-select">
+                            <option value="sc">Simple Cubic</option>
+                            <option value="bcc">Body-Centered Cubic</option>
+                            <option value="fcc">Face-Centered Cubic</option>
+                            <option value="hcp">Hexagonal Close-Packed</option>
+                        </select>
+                    </div>
+                    <div id="lattice-display-controls" class="space-y-2">
+                        <label>
+                            <input type="radio" name="lattice-display" value="unit-cell" checked>
+                            <span class="ml-2 text-sm">Unit Cell</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="lattice-display" value="layer">
+                            <span class="ml-2 text-sm">Layer</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="lattice-display" value="coordination">
+                            <span class="ml-2 text-sm">Coordination</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="lattice-display" value="single">
+                            <span class="ml-2 text-sm">Single</span>
+                        </label>
+                    </div>
+                    <button id="toggle-outline-btn" class="btn btn-secondary w-full text-xs sm:text-sm !py-1">Sembunyikan Sel</button>
                 </div>
-                <div id="lattice-display-controls" class="space-y-2">
-                    <label>
-                        <input type="radio" name="lattice-display" value="unit-cell" checked>
-                        <span class="ml-2 text-sm">Unit Cell</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="lattice-display" value="layer">
-                        <span class="ml-2 text-sm">Layer</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="lattice-display" value="coordination">
-                        <span class="ml-2 text-sm">Coordination</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="lattice-display" value="single">
-                        <span class="ml-2 text-sm">Single</span>
-                    </label>
-                </div>
-                <button id="toggle-outline-btn" class="btn btn-secondary w-full text-xs sm:text-sm !py-1">Sembunyikan Sel</button>
-            </div>
+             </div>
         </div>
         
+        <!-- Tombol untuk menampilkan kembali panel info kisi -->
+        <button id="show-lattice-info-btn" class="icon-btn absolute top-4 right-4 z-10 hidden" aria-label="Tampilkan Informasi Kisi">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </button>
+
         <!-- Panel Informasi Kisi -->
         <div id="lattice-info-panel" class="panel absolute top-44 sm:top-40 md:top-4 right-2 md:right-4 p-3 md:p-4 rounded-lg shadow-lg w-auto md:w-72 z-10">
-            <h2 class="text-base md:text-lg font-bold">Informasi Kisi</h2>
-            <div class="mt-2 pt-2 border-t" style="border-color: var(--panel-border-color);">
+            <div id="lattice-info-header" class="flex justify-between items-center cursor-pointer">
+                <h2 class="text-base md:text-lg font-bold">Informasi Kisi</h2>
+                <svg id="lattice-info-arrow" class="w-6 h-6 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </div>
+            <div id="lattice-info-content" class="mt-2 pt-2 border-t" style="border-color: var(--panel-border-color);">
                 <div class="space-y-1 text-sm">
                     <p><strong>Bilangan Koordinasi:</strong> <span id="lattice-coordination-number"></span></p>
                     <p><strong>Faktor Tumpukan Atom (APF):</strong> <span id="lattice-apf"></span></p>
@@ -778,6 +810,11 @@
             
             // Inisialisasi mode awal
             updateUIMode();
+
+            // Tutup semua panel secara default saat pertama kali dimuat
+            toggleInfoPanel();
+            toggleLatticeControlsPanel();
+            toggleLatticeInfoPanel();
 
             // Mulai loop animasi
             animate();
@@ -1252,10 +1289,22 @@
             domElements.moonIcon.classList.toggle('hidden', !isLightMode);
         }
 
-
         function toggleInfoPanel() { 
-            const isCollapsed = domElements.infoPanel.classList.toggle('collapsed-side');
+            const isCollapsed = domElements.infoPanel.classList.toggle('collapsed-side-right');
             domElements.showInfoBtn.classList.toggle('hidden', !isCollapsed);
+            domElements.infoArrow.classList.toggle('rotate-180');
+        }
+
+        function toggleLatticeControlsPanel() {
+            const isCollapsed = domElements.latticeControlsPanel.classList.toggle('collapsed-side-left');
+            domElements.showLatticeControlsBtn.classList.toggle('hidden', !isCollapsed);
+            domElements.latticeControlsArrow.classList.toggle('rotate-180');
+        }
+
+        function toggleLatticeInfoPanel() {
+            const isCollapsed = domElements.latticeInfoPanel.classList.toggle('collapsed-side-right');
+            domElements.showLatticeInfoBtn.classList.toggle('hidden', !isCollapsed);
+            domElements.latticeInfoArrow.classList.toggle('rotate-180');
         }
         
         function togglePeriodicTable() { domElements.periodicTableModal.classList.toggle('hidden'); }
@@ -1405,7 +1454,7 @@
                 'view-toggle-text', 'sun-icon', 'moon-icon', 'structure-toggle-btn',
                 'expansion-toggle-btn', 'atom-expansion-slider-container', 'atom-expansion-slider',
                 'toggle-nucleus', 'periodic-table-modal', 'performance-warning-modal',
-                'continue-warning-btn', 'periodic-table-grid', 'info-header',
+                'continue-warning-btn', 'periodic-table-grid', 'info-header', 'info-arrow',
                 'periodic-table-backdrop', 'cancel-warning-btn', 'add-proton', 'add-neutron',
                 'add-electron', 'remove-proton', 'remove-neutron', 'remove-electron',
                 'reset-atom', 'periodic-table-btn', 'theme-toggle-btn', 'view-toggle-btn',
@@ -1413,7 +1462,9 @@
                 'lattice-controls-panel', 'lattice-type-select', 'lattice-display-controls', 
                 'lattice-expansion-slider-container', 'lattice-expansion-slider',
                 'lattice-info-panel', 'lattice-coordination-number', 'lattice-apf', 'lattice-parameter-relation',
-                'toggle-outline-btn'
+                'toggle-outline-btn', 'lattice-controls-header', 'show-lattice-controls-btn', 
+                'lattice-info-header', 'show-lattice-info-btn', 'lattice-controls-arrow', 'lattice-info-arrow',
+                'lattice-controls-content', 'lattice-info-content'
             ];
             ids.forEach(id => {
                 const camelCaseId = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
@@ -1467,6 +1518,10 @@
                 });
             });
             domElements.toggleOutlineBtn.addEventListener('click', toggleOutlineVisibility);
+            domElements.latticeControlsHeader.addEventListener('click', toggleLatticeControlsPanel);
+            domElements.showLatticeControlsBtn.addEventListener('click', toggleLatticeControlsPanel);
+            domElements.latticeInfoHeader.addEventListener('click', toggleLatticeInfoPanel);
+            domElements.showLatticeInfoBtn.addEventListener('click', toggleLatticeInfoPanel);
             // Kontrol Modal "Tentang"
             domElements.aboutBtn.addEventListener('click', toggleAboutModal);
             domElements.closeAboutBtn.addEventListener('click', toggleAboutModal);
