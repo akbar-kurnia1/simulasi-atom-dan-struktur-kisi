@@ -60,7 +60,9 @@ const latticeAtomMaterialClipped = new THREE.MeshStandardMaterial({
 const appState = {
     // State umum
     simulationMode: 'atom', 
-    
+    // tambahan
+    coordinationViewPoint: 'corner',
+
     // State mode atom
     protons: 1, neutrons: 0, electrons: 1, isNucleusSeparated: false,
     isNucleusStructured: false, isNucleusExpanded: false, nucleusExpansionFactor: 1.0, is3DView: true,
@@ -81,16 +83,56 @@ const LATTICE_DEFINITIONS = {
         contribution_calc: { corners: 8, faces: 0, body: 0, total: 1 }
     },
     bcc: {
-        name: "Body-Centered Cubic", coordinationNumber: 8, apf: 0.68, relation: "a = 4R / &radic;3",
-        unitCell: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1], [0.5,0.5,0.5] ],
-        coordination: { center: [0.5,0.5,0.5], neighbors: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1] ] },
-        layer: [ [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,1] ],
+        name: "Body-Centered Cubic",
+        coordinationNumber: 8,
+        apf: 0.68,
+        relation: "a = 4R / &radic;3",
+        unitCell: [
+            [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1],
+            [0.5,0.5,0.5]
+        ],
+        // Tampilan koordinasi dari atom di PUSAT (tampilan klasik)
+        coordination_center: {
+            center: [0.5, 0.5, 0.5],
+            neighbors: [
+                [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1]
+            ]
+        },
+        // Tampilan koordinasi dari atom di SUDUT
+        coordination_corner: {
+            center: [0, 0, 0],
+            neighbors: [
+                // 8 atom di pusat sel-sel tetangga
+                [0.5,0.5,0.5], [-0.5,0.5,0.5], [0.5,-0.5,0.5], [0.5,0.5,-0.5],
+                [-0.5,-0.5,0.5], [-0.5,0.5,-0.5], [0.5,-0.5,-0.5], [-0.5,-0.5,-0.5]
+            ]
+        },
+        layer: [
+            [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,1]
+        ],
         contribution_calc: { corners: 8, faces: 0, body: 1, total: 2 }
     },
     fcc: {
         name: "Face-Centered Cubic", coordinationNumber: 12, apf: 0.74, relation: "a = 2R&radic;2",
         unitCell: [ [0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,0,1], [1,0,1], [1,1,1], [0,1,1], [0.5,0.5,0], [0.5,0.5,1], [0,0.5,0.5], [1,0.5,0.5], [0.5,0,0.5], [0.5,1,0.5] ],
-        coordination: { center: [0, 0, 0], neighbors: [ [0.5, 0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [-0.5, -0.5, 0], [0.5, 0, 0.5], [0.5, 0, -0.5], [-0.5, 0, 0.5], [-0.5, 0, -0.5], [0, 0.5, 0.5], [0, -0.5, 0.5], [0, 0.5, -0.5], [0, -0.5, -0.5] ] },
+        coordination_corner: {
+            center: [0, 0, 0],
+            neighbors: [
+                [0.5, 0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [-0.5, -0.5, 0],
+                [0.5, 0, 0.5], [0.5, 0, -0.5], [-0.5, 0, 0.5], [-0.5, 0, -0.5],
+                [0, 0.5, 0.5], [0, -0.5, 0.5], [0, 0.5, -0.5], [0, -0.5, -0.5]
+            ]
+        },
+        coordination_face: {
+            center: [0.5, 0.5, 0], // Pusat pengamatan di tengah sisi
+            neighbors: [
+                // 4 tetangga di sudut
+                [0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0],
+                // 8 tetangga di pusat sisi lain
+                [0.5, 0, 0.5], [0.5, 0, -0.5], [0.5, 1, 0.5], [0.5, 1, -0.5],
+                [0, 0.5, 0.5], [0, 0.5, -0.5], [1, 0.5, 0.5], [1, 0.5, -0.5]
+            ]
+        },
         layer: [ [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,0] ],
         contribution_calc: { corners: 8, faces: 6, body: 0, total: 4 }
     },
@@ -157,8 +199,8 @@ function init() {
 
     // Tutup semua panel secara default saat pertama kali dimuat
     //toggleInfoPanel();
-    toggleLatticeControlsPanel();
-    toggleLatticeInfoPanel();
+    //toggleLatticeControlsPanel();
+    //toggleLatticeInfoPanel();
 
     // Mulai loop animasi
     animate();
@@ -303,23 +345,82 @@ function buildLattice() {
     switch(displayMode) {
         case 'unit-cell':
         case 'contribution':
+            domElements.toggleOutlineBtn.style.display = 'block'; // Tampilkan tombol
             positions = definition.unitCell;
             break;
         case '8-cells':
+            domElements.toggleOutlineBtn.style.display = 'block'; // Tampilkan tombol
             buildMultiCells(2);
             break;
         case '27-cells':
+            domElements.toggleOutlineBtn.style.display = 'block'; // Tampilkan tombol
             buildMultiCells(3);
             break;
         case 'layer':
+            domElements.toggleOutlineBtn.style.display = 'block'; // Tampilkan tombol
             positions = definition.layer;
             break;
-        case 'coordination':
-            drawCoordination(definition.coordination);
-            break;
-        case 'single':
-             positions = type === 'hcp' ? [[0, 0, 0.8165]] : [[0.5, 0.5, 0.5]];
-             break;
+            case 'coordination':
+                let coordinationData;
+                const viewPoint = appState.coordinationViewPoint;
+            
+                // Logika yang lebih cerdas untuk memilih data yang benar
+                if (type === 'fcc' || type === 'bcc') {
+                    if (viewPoint === 'corner') {
+                        coordinationData = definition.coordination_corner;
+                    } else { // 'face' radio button is selected
+                        coordinationData = (type === 'fcc')
+                            ? definition.coordination_face
+                            : definition.coordination_center;
+                    }
+                } else {
+                    coordinationData = definition.coordination;
+                }
+            
+                if (coordinationData) {
+                    drawCoordination(coordinationData);
+                }
+            
+                if (type !== 'hcp') {
+                    for (let i = 0; i >= -1; i--) {
+                        for (let j = 0; j >= -1; j--) {
+                            for (let k = 0; k >= -1; k--) {
+                                const isMainCell = (i === 0 && j === 0 && k === 0);
+                                const outline = createOutline(!isMainCell);
+                                outline.position.set(i * LATTICE_CONSTANT, j * LATTICE_CONSTANT, k * LATTICE_CONSTANT);
+                                latticeOutlinesGroup.add(outline);
+                            }
+                        }
+                    }
+                } else {
+                    unitCellOutline = createOutline(false);
+                    latticeOutlinesGroup.add(unitCellOutline);
+                }
+            
+                domElements.toggleOutlineBtn.style.display = 'none';
+                break;
+            case 'single':
+                domElements.toggleOutlineBtn.style.display = 'block'; // Tampilkan tombol
+                
+                // Logika baru untuk menentukan posisi atom tunggal berdasarkan tipe kisi
+                switch(type) {
+                    case 'sc':
+                        positions = [[0, 0, 0]]; // Tampilkan atom di sudut untuk Simple Cubic
+                        break;
+                    case 'bcc':
+                        positions = [[0.5, 0.5, 0.5]]; // Tampilkan atom di tengah untuk BCC
+                        break;
+                    case 'fcc':
+                        positions = [[0.5, 0.5, 0]]; // Tampilkan atom di pusat sisi untuk FCC
+                        break;
+                    case 'hcp':
+                        // Posisi atom di lapisan tengah untuk HCP
+                        positions = [[0.5, 0.289, 0.8165]]; 
+                        break;
+                    default:
+                        positions = [[0, 0, 0]];
+                }
+                break;
     }
     
     if (displayMode !== 'coordination' && !isMultiCell) {
@@ -644,7 +745,93 @@ function updateLatticeInfoPanel() {
         domElements.contributionTotal.textContent = `Total: ${calc.total} atom/sel`;
     }
 }
+function updateCoordinationOptionsVisibility() {
+    const coordOptions = document.getElementById('coordination-options');
+    // Kondisi: Mode 'coordination' DAN tipe kisi 'fcc' ATAU 'bcc'
+    const shouldBeVisible = appState.latticeDisplayMode === 'coordination' &&
+                           (appState.latticeType === 'fcc' || appState.latticeType === 'bcc');
 
+    if (shouldBeVisible) {
+        coordOptions.classList.remove('hidden');
+        // Mengubah teks label secara dinamis
+        const secondaryLabel = coordOptions.querySelector('label:has(input[value="face"]) span');
+        if (appState.latticeType === 'bcc') {
+            secondaryLabel.textContent = 'Amati dari Pusat';
+        } else { // default untuk FCC
+            secondaryLabel.textContent = 'Amati dari Sisi';
+        }
+    } else {
+        coordOptions.classList.add('hidden');
+    }
+}
 function cacheDOMElements(){const ids=['bg','title-panel','main-title','main-subtitle','mode-switch-btn','atom-sim-ui','lattice-sim-ui','info-panel','show-info-btn','element-name','atomic-number','mass-number','charge','isotope-name','core-stability','element-phase','element-usage','electron-config-string','view-toggle-text','sun-icon','moon-icon','structure-toggle-btn','expansion-toggle-btn','atom-expansion-slider-container','atom-expansion-slider','toggle-nucleus','periodic-table-modal','performance-warning-modal','continue-warning-btn','periodic-table-grid','info-header','info-arrow','periodic-table-backdrop','cancel-warning-btn','add-proton','add-neutron','add-electron','remove-proton','remove-neutron','remove-electron','reset-atom','periodic-table-btn','theme-toggle-btn','view-toggle-btn','zoom-in-btn','zoom-out-btn','about-btn','about-modal','close-about-btn','about-modal-backdrop','lattice-controls-panel','lattice-type-select','lattice-display-controls','lattice-expansion-slider-container','lattice-expansion-slider','lattice-info-panel','lattice-coordination-number','lattice-apf','lattice-parameter-relation','toggle-outline-btn','lattice-controls-header','show-lattice-controls-btn','lattice-info-header','show-lattice-info-btn','lattice-controls-arrow','lattice-info-arrow','lattice-controls-content','lattice-info-content','lattice-contribution-section','contribution-corners','contribution-faces','contribution-body','contribution-total'];ids.forEach(id=>{const c=id.replace(/-([a-z])/g,g=>g[1].toUpperCase());domElements[c]=document.getElementById(id);});}
-function setupEventListeners(){window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});domElements.modeSwitchBtn.addEventListener('click',toggleSimulationMode);domElements.addProton.addEventListener('click',()=>updateParticleCount('protons',1));domElements.addNeutron.addEventListener('click',()=>updateParticleCount('neutrons',1));domElements.addElectron.addEventListener('click',()=>updateParticleCount('electrons',1));domElements.removeProton.addEventListener('click',()=>updateParticleCount('protons',-1));domElements.removeNeutron.addEventListener('click',()=>updateParticleCount('neutrons',-1));domElements.removeElectron.addEventListener('click',()=>updateParticleCount('electrons',-1));domElements.toggleNucleus.addEventListener('click',toggleNucleusSeparation);domElements.resetAtom.addEventListener('click',resetAtom);domElements.periodicTableBtn.addEventListener('click',togglePeriodicTable);domElements.structureToggleBtn.addEventListener('click',toggleNucleusStructure);domElements.expansionToggleBtn.addEventListener('click',toggleNucleusExpansion);domElements.themeToggleBtn.addEventListener('click',toggleTheme);domElements.viewToggleBtn.addEventListener('click',toggleViewMode);domElements.zoomInBtn.addEventListener('click',()=>zoom(0.8));domElements.zoomOutBtn.addEventListener('click',()=>zoom(1.2));domElements.infoHeader.addEventListener('click',toggleInfoPanel);domElements.showInfoBtn.addEventListener('click',toggleInfoPanel);domElements.periodicTableBackdrop.addEventListener('click',togglePeriodicTable);domElements.cancelWarningBtn.addEventListener('click',cancelWarning);domElements.continueWarningBtn.addEventListener('click',continueWarning);domElements.atomExpansionSlider.addEventListener('input',handleAtomExpansionSlider);domElements.latticeTypeSelect.addEventListener('change',(e)=>{appState.latticeType=e.target.value;initLatticeMode();});domElements.latticeExpansionSlider.addEventListener('input',(e)=>{appState.latticeExpansion=parseFloat(e.target.value);applyLatticeExpansion();});document.querySelectorAll('input[name="lattice-display"]').forEach(r=>{r.addEventListener('change',(e)=>{appState.latticeDisplayMode=e.target.value;buildLattice();});});domElements.toggleOutlineBtn.addEventListener('click',toggleOutlineVisibility);domElements.latticeControlsHeader.addEventListener('click',toggleLatticeControlsPanel);domElements.showLatticeControlsBtn.addEventListener('click',toggleLatticeControlsPanel);domElements.latticeInfoHeader.addEventListener('click',toggleLatticeInfoPanel);domElements.showLatticeInfoBtn.addEventListener('click',toggleLatticeInfoPanel);domElements.aboutBtn.addEventListener('click',toggleAboutModal);domElements.closeAboutBtn.addEventListener('click',toggleAboutModal);domElements.aboutModalBackdrop.addEventListener('click',toggleAboutModal);}
+function setupEventListeners() {
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // --- Event Listener untuk Mode ATOM ---
+    domElements.modeSwitchBtn.addEventListener('click', toggleSimulationMode);
+    domElements.addProton.addEventListener('click', () => updateParticleCount('protons', 1));
+    domElements.addNeutron.addEventListener('click', () => updateParticleCount('neutrons', 1));
+    domElements.addElectron.addEventListener('click', () => updateParticleCount('electrons', 1));
+    domElements.removeProton.addEventListener('click', () => updateParticleCount('protons', -1));
+    domElements.removeNeutron.addEventListener('click', () => updateParticleCount('neutrons', -1));
+    domElements.removeElectron.addEventListener('click', () => updateParticleCount('electrons', -1));
+    domElements.toggleNucleus.addEventListener('click', toggleNucleusSeparation);
+    domElements.resetAtom.addEventListener('click', resetAtom);
+    domElements.periodicTableBtn.addEventListener('click', togglePeriodicTable);
+    domElements.structureToggleBtn.addEventListener('click', toggleNucleusStructure);
+    domElements.expansionToggleBtn.addEventListener('click', toggleNucleusExpansion);
+    domElements.atomExpansionSlider.addEventListener('input', handleAtomExpansionSlider);
+    
+    // --- Event Listener untuk Mode KISI ---
+    domElements.latticeTypeSelect.addEventListener('change', (e) => {
+        appState.latticeType = e.target.value;
+        updateCoordinationOptionsVisibility(); // Panggil fungsi pengecekan
+        initLatticeMode();
+    });
+
+    domElements.latticeExpansionSlider.addEventListener('input', (e) => {
+        appState.latticeExpansion = parseFloat(e.target.value);
+        applyLatticeExpansion();
+    });
+    
+    domElements.toggleOutlineBtn.addEventListener('click', toggleOutlineVisibility);
+
+    document.querySelectorAll('input[name="lattice-display"]').forEach(r => {
+        r.addEventListener('change', (e) => {
+            appState.latticeDisplayMode = e.target.value;
+            updateCoordinationOptionsVisibility(); // Panggil fungsi pengecekan
+            buildLattice();
+        });
+    });
+
+    document.querySelectorAll('input[name="coordination-view"]').forEach(r => {
+        r.addEventListener('change', (e) => {
+            appState.coordinationViewPoint = e.target.value;
+            buildLattice();
+        });
+    });
+
+    // --- Event Listener UMUM & UI ---
+    domElements.themeToggleBtn.addEventListener('click', toggleTheme);
+    domElements.viewToggleBtn.addEventListener('click', toggleViewMode);
+    domElements.zoomInBtn.addEventListener('click', () => zoom(0.8));
+    domElements.zoomOutBtn.addEventListener('click', () => zoom(1.2));
+    domElements.infoHeader.addEventListener('click', toggleInfoPanel);
+    domElements.showInfoBtn.addEventListener('click', toggleInfoPanel);
+    domElements.periodicTableBackdrop.addEventListener('click', togglePeriodicTable);
+    domElements.cancelWarningBtn.addEventListener('click', cancelWarning);
+    domElements.continueWarningBtn.addEventListener('click', continueWarning);
+    domElements.latticeControlsHeader.addEventListener('click', toggleLatticeControlsPanel);
+    domElements.showLatticeControlsBtn.addEventListener('click', toggleLatticeControlsPanel);
+    domElements.latticeInfoHeader.addEventListener('click', toggleLatticeInfoPanel);
+    domElements.showLatticeInfoBtn.addEventListener('click', toggleLatticeInfoPanel);
+    domElements.aboutBtn.addEventListener('click', toggleAboutModal);
+    domElements.closeAboutBtn.addEventListener('click', toggleAboutModal);
+    domElements.aboutModalBackdrop.addEventListener('click', toggleAboutModal);
+}
 document.addEventListener('DOMContentLoaded',init);
