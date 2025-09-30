@@ -108,7 +108,7 @@ const LATTICE_DEFINITIONS = {
             ]
         },
         layer: [
-            [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,1]
+            [0,0,0], [1,0,0], [0,1,0], [1,1,0], [0.5,0.5,0.5]
         ],
         contribution_calc: { corners: 8, faces: 0, body: 1, total: 2 }
     },
